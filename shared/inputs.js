@@ -14,93 +14,6 @@ function createInput(type, config) {
 
   return builder(config);
 }
-
-// --------------------
-// SCALAR - Für Listen von Zahlen (wie bei Nullstellen)
-// --------------------
-registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
-  const container = document.createElement("div");
-  container.style.display = "flex";
-  container.style.flexDirection = "column";
-  container.style.gap = "5px";
-  container.style.alignItems = "flex-end";
-
-  const input = document.createElement("input");
-  input.type = "text";
-  input.placeholder = "z.B. -67, 42";
-  input.style.width = "200px";
-  input.style.padding = "8px";
-  input.style.fontSize = "16px";
-  input.style.textAlign = "right";
-
-  if (initialValue) {
-    input.value = initialValue;
-  }
-
-  if (isSolved) {
-    input.disabled = true;
-    input.classList.add("solved-input");
-  }
-
-  const validateInput = () => {
-    if (input.disabled) return;
-
-    const rawValue = input.value.trim();
-    if (rawValue === "") {
-      input.classList.remove("correct", "wrong");
-      return;
-    }
-
-    let expectedAnswers = [];
-    if (Array.isArray(task.answer)) {
-      expectedAnswers = [...task.answer];
-    } else {
-      expectedAnswers = [task.answer];
-    }
-    expectedAnswers.sort((a, b) => a - b);
-
-    let userAnswers = [];
-    const parts = rawValue.split(",");
-    for (const part of parts) {
-      const trimmed = part.trim();
-      const num = parseFloat(trimmed);
-      if (!isNaN(num)) {
-        userAnswers.push(num);
-      }
-    }
-    userAnswers.sort((a, b) => a - b);
-
-    let allCorrect = false;
-    
-    if (userAnswers.length === expectedAnswers.length) {
-      allCorrect = true;
-      const tolerance = task.tolerance || 0.001;
-      
-      for (let i = 0; i < expectedAnswers.length; i++) {
-        if (Math.abs(userAnswers[i] - expectedAnswers[i]) >= tolerance) {
-          allCorrect = false;
-          break;
-        }
-      }
-    }
-
-    if (allCorrect) {
-      input.classList.add("correct");
-      input.classList.remove("wrong");
-      input.disabled = true;
-      onCorrect(rawValue);
-    } else {
-      input.classList.add("wrong");
-      input.classList.remove("correct");
-    }
-  };
-
-  input.addEventListener("input", validateInput);
-  input.addEventListener("change", validateInput);
-
-  container.appendChild(input);
-  return container;
-});
 // --------------------
 // NUMBER_ORDERING_DRAG - Zahlen per Drag & Drop ordnen
 // --------------------
@@ -427,6 +340,92 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
   // Initial rendern
   renderItems(shuffledNumbers);
   
+  return container;
+});
+// --------------------
+// SCALAR - Für Listen von Zahlen (wie bei Nullstellen)
+// --------------------
+registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = document.createElement("div");
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "5px";
+  container.style.alignItems = "flex-end";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "z.B. -67, 42";
+  input.style.width = "200px";
+  input.style.padding = "8px";
+  input.style.fontSize = "16px";
+  input.style.textAlign = "right";
+
+  if (initialValue) {
+    input.value = initialValue;
+  }
+
+  if (isSolved) {
+    input.disabled = true;
+    input.classList.add("solved-input");
+  }
+
+  const validateInput = () => {
+    if (input.disabled) return;
+
+    const rawValue = input.value.trim();
+    if (rawValue === "") {
+      input.classList.remove("correct", "wrong");
+      return;
+    }
+
+    let expectedAnswers = [];
+    if (Array.isArray(task.answer)) {
+      expectedAnswers = [...task.answer];
+    } else {
+      expectedAnswers = [task.answer];
+    }
+    expectedAnswers.sort((a, b) => a - b);
+
+    let userAnswers = [];
+    const parts = rawValue.split(",");
+    for (const part of parts) {
+      const trimmed = part.trim();
+      const num = parseFloat(trimmed);
+      if (!isNaN(num)) {
+        userAnswers.push(num);
+      }
+    }
+    userAnswers.sort((a, b) => a - b);
+
+    let allCorrect = false;
+    
+    if (userAnswers.length === expectedAnswers.length) {
+      allCorrect = true;
+      const tolerance = task.tolerance || 0.001;
+      
+      for (let i = 0; i < expectedAnswers.length; i++) {
+        if (Math.abs(userAnswers[i] - expectedAnswers[i]) >= tolerance) {
+          allCorrect = false;
+          break;
+        }
+      }
+    }
+
+    if (allCorrect) {
+      input.classList.add("correct");
+      input.classList.remove("wrong");
+      input.disabled = true;
+      onCorrect(rawValue);
+    } else {
+      input.classList.add("wrong");
+      input.classList.remove("correct");
+    }
+  };
+
+  input.addEventListener("input", validateInput);
+  input.addEventListener("change", validateInput);
+
+  container.appendChild(input);
   return container;
 });
 // --------------------
