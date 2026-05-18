@@ -115,96 +115,153 @@ const levels = [
     ]
   },
   
-  // Aufgabe 3: Parameter
-  {
-    id: "task3_parameters",
-       tasks: [
-      {
-        id: "task3_task_a",
-        question: "a) Bestimmen Sie den Parameter \\(t\\)",
-        type: "scalar",
-        answer: 0.45,
-        tolerance: 0.01,
-        difficulty: 1
-      },
-      {
-        id: "task3_task_b",
-        question: "b) Bestimmen Sie den Parameter \\(t\\)",
-        type: "scalar",
-        answer: 4,
-        difficulty: 1
-      },
-      {
-        id: "task3_task_c",
-        question: "c) Bestimmen Sie den Parameter \\(t\\)",
-        type: "scalar",
-        answer: 1.67,
-        tolerance: 0.01,
-        difficulty: 1
-      }
-    ]
-  },
+   // Aufgabe 3: Zahlenstrahl (MIT CODE-SCHLÜSSEL)
+{
+  title:"📐", 
+  id: "task3_sketch",
+  tasks: [
+    {
+      id: "task3_task_a",
+      question: "📐 Zahlenstrahl anfertigen",
+      type: "code",
+      answer: { code: "SK03", message: "✏️ Bitte gib den Code von deiner Lehrkraft ein." },
+      difficulty: 1,
+      hint: "Die Lehrkraft gibt dir einen Code nach der Besprechung"
+    },
+    {
+      id: "task3_task_b",
+      question: "📐 Zahlenstrahl anfertigen",
+      type: "code",
+      answer: { code: "AF03", message: "✏️ Bitte gib den Code von deiner Lehrkraft ein." },
+      difficulty: 1,
+      hint: "Die Lehrkraft gibt dir einen Code nach der Besprechung"
+    },
+    {
+      id: "task3_task_c",
+      question: "📐 Zahlenstrahl anfertigen",
+      type: "code",
+      answer: { code: "UF03", message: "✏️ Bitte gib den Code von deiner Lehrkraft ein." },
+      difficulty: 1,
+      hint: "Die Lehrkraft gibt dir einen Code nach der Besprechung"
+    },
+    {
+      id: "task3_task_d",
+      question: "📐 Zahlenstrahl anfertigen",
+      type: "code",
+      answer: { code: "HK03", message: "✏️ Bitte gib den Code von deiner Lehrkraft ein." },
+      difficulty: 1,
+      hint: "Die Lehrkraft gibt dir einen Code nach der Besprechung"
+    }
+  ]
+},
   
-  // Aufgabe 4: Geometrie
+  // Aufgabe 4: Lücke füllen
   {
-    id: "task4_geometry",
+    id: "task4_lücke_füllen",
       tasks: [
       {
         id: "task4_task_a",
-        question: "a) Dreiecksprüfung",
-        type: "triangle_properties",
-      sides: [
-        { name: "AB", expected: 7, placeholder: "Länge AB" },
-        { name: "BC", expected: 7.07, placeholder: "Länge BC" },
-        { name: "CA", expected: 7, placeholder: "Länge CA" }
-      ],
-      properties: [
-        { name: "isosceles", label: "gleichschenklig", expected: true },
-        { name: "equilateral", label: "gleichseitig", expected: false },
-        { name: "right", label: "rechtwinklig", expected: false }
-      ],
-      difficulty: 3,
-      },
+        question: "a) ",
+        type: "scalar",
+        answer: 100,
+        difficulty: 1,
+     },
       {
         id: "task4_task_b",
-        question: "b) Bestimmen Sie Punkt D",
-        type: "point",
-        answer: { values: [2, -1, 6] },
-        difficulty: 3
-      }
+        question: "b) ",
+        type: "scalar",
+        answer: 7,
+        difficulty: 1,
+     },
+     {
+        id: "task4_task_c",
+        question: "c) ",
+        type: "scalar",
+        answer: 120,
+        difficulty: 1,
+     },
+     {
+        id: "task4_task_d",
+        question: "d) ",
+        type: "scalar",
+        answer: -5010,
+        difficulty: 1,
+     }
     ]
   },
   
- // Aufgabe 5: Vektoroperationen 1
+ // Aufgabe 5: Berechnungen mit Beträgen
 {
-  id: "task5_vector_ops1",
+  id: "task5_berechnungen_mit_betraegen",
     tasks: [
     {
       id: "task5_task_a",
-      question: "a) \\(\\vec{a} - \\vec{b} + \\vec{c} = \\)",
-      type: "vector_check",
-      answer: { values: [3, 10] },
+      question: "a) \\(-356 + 94= \\)",
+      type: "scalar",
+      answer: -262,
       difficulty: 1
     },
     {
       id: "task5_task_b",
-      question: "b) \\(\\vec{b} - \\vec{a} - \\vec{c} = \\)",
-      type: "vector_check",
-      answer: { values: [-3, -10] },
+      question: "b) \\(456-853= \\)",
+      type: "scalar",
+      answer: -407,
       difficulty: 1
     },
     {
       id: "task5_task_c",
-      question: "c) \\(\\vec{a} - \\vec{b} + \\vec{d} = \\)",
-      type: "vector_check",
-      answer: { values: ["n", "L", 1] },
-      difficulty: 1,
+      question: "c) \\(-45 - 37= \\)",
+      type: "scalar",
+      answer: -82,
+      difficulty: 1
     },
     {
       id: "task5_task_d",
-      question: "d) \\(\\vec{d} + \\vec{e} - \\vec{f} = \\)",
-      type: "vector_check",
-      answer: { values: [5, 1, 5] },
+      question: "d) \\(56 + (-324)= \\)",
+      type: "scalar",
+      answer: -268,
+      difficulty: 1
+    },
+    {
+      id: "task5_task_e",
+      question: "e) \\(- 78 - (-34)= \\)",
+      type: "scalar",
+      answer: -44,
+      difficulty: 1
+    },
+    {
+      id: "task5_task_f",
+      question: "f) \\(-46+(-29)= \\)",
+      type: "scalar",
+      answer: -75,
+      difficulty: 1
+    },
+    {
+      id: "task5_task_g",
+      question: "g) \\(591 + ( - 35)= \\)",
+      type: "scalar",
+      answer: 556,
+      difficulty: 1
+    },
+    {
+      id: "task5_task_h",
+      question: "h) \\(│-9-6│-│-25│= \\)",
+      type: "scalar",
+      answer: -10,
+      difficulty: 1
+    },
+    {
+      id: "task5_task_i",
+      question: "i) \\(-17+│-16+5│= \\)",
+      type: "scalar",
+      answer: -6,
+      difficulty: 1
+    },
+    {
+      id: "task5_task_j",
+      question: "j) \\(-|-12|+(-3)-(+5)-2 \\)",
+      type: "scalar",
+      answer: -22,
       difficulty: 1
     }
   ]
