@@ -817,10 +817,10 @@ function addMenuBackButton() {
   const backBtn = document.createElement("button");
   backBtn.textContent = "🏠 Hauptmenü";
   backBtn.style.position = "fixed";
-  backBtn.style.bottom = "20px";
-  backBtn.style.left = "20px";
+  backBtn.style.top = "20px";           // ← von bottom zu top geändert
+  backBtn.style.left = "20px";          // ← bleibt links
   backBtn.style.padding = "8px 16px";
-  backBtn.style.background = "#667eea";
+  backBtn.style.background = "#4caf50"; // ← von #667eea zu grün geändert
   backBtn.style.color = "white";
   backBtn.style.border = "none";
   backBtn.style.borderRadius = "25px";
@@ -829,7 +829,7 @@ function addMenuBackButton() {
   backBtn.style.fontSize = "14px";
   backBtn.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
   backBtn.onclick = () => {
-    window.location.href = "/index.html";  // Absolute Pfadangabe vom Root
+    window.location.href = "index.html";  // ← führendes / entfernt!
   };
   document.body.appendChild(backBtn);
 }
