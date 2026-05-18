@@ -58,7 +58,7 @@ const levels = [
       },
       {
         id: "task1_task_h",
-        question: "h) \\75+99+92+40=\\)",
+        question: "h) \\(75+99+92+40=\\)",
         type: "scalar",
         answer: 306,
         difficulty: 1
