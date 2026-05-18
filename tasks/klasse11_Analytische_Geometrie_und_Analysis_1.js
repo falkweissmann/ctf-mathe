@@ -289,7 +289,7 @@ const levels = [
         difficulty: 1
       },
       {
-        id: "task9_task_b",
+        id: "wanderer_b",
         question: "Zurückgelegte Strecke:",
         type: "scalar",
         answer: 20,
