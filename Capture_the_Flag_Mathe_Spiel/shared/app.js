@@ -806,7 +806,7 @@ setTimeout(() => {
 // "Zurück zum Menü" Button hinzufügen
 function addMenuBackButton() {
   // Nur anzeigen, wenn wir NICHT auf dem echten Hauptmenü sind
-  const isMainMenu = window.location.pathname === "/menu.html" || 
+  const isMainMenu = window.location.pathname === "/index.html" || 
                      window.location.pathname === "/" ||
                      window.location.pathname === "/index.html";
   
@@ -829,7 +829,7 @@ function addMenuBackButton() {
   backBtn.style.fontSize = "14px";
   backBtn.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
   backBtn.onclick = () => {
-    window.location.href = "/menu.html";  // Absolute Pfadangabe vom Root
+    window.location.href = "/index.html";  // Absolute Pfadangabe vom Root
   };
   document.body.appendChild(backBtn);
 }
