@@ -829,7 +829,7 @@ function addMenuBackButton() {
   backBtn.style.fontSize = "14px";
   backBtn.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
   backBtn.onclick = () => {
-    window.location.href = "index.html";  // ← führendes / entfernt!
+    window.location.href = "../index.html";  // ← führendes / entfernt!
   };
   document.body.appendChild(backBtn);
 }
