@@ -351,7 +351,7 @@ const levels = [
       {
         id: "task8_task_a",
         question: "a) Ordne die Zahlen:\\(-6057; -5067; -5607; +5076; -5076; - 6507\\)",
-        type: "number_ordering",
+        type: "number_ordering_drag",
         answer: { 
         values: [-6507, -6057, -5607, -5076, -5067, +5076],  // Die erwartete Reihenfolge
         ordering: "asc"                     // "asc" = aufsteigend, "desc" = absteigend
@@ -361,7 +361,7 @@ const levels = [
       {
         id: "task8_task_b",
         question: "b) Ordne die Zahlen:\\(-8032; -8302; +8302; -8023; -8230; -8030\\)",
-        type: "number_ordering",
+        type: "number_ordering_drag",
         answer: { 
         values: [-8302, -8032, -8030, -8023, -8230, +8302],  // Die erwartete Reihenfolge
         ordering: "asc"                     // "asc" = aufsteigend, "desc" = absteigend
@@ -371,7 +371,7 @@ const levels = [
       {
         id: "task8_task_c",
         question: "c) Ordne die Zahlen:\\(-4201; +4021; -4012; -4120; -4021; -4210\\)",
-        type: "number_ordering",
+        type: "number_ordering_drag",
         answer: { 
         values: [-4210, -4201, -4120, -4021, -4012, +4021],  // Die erwartete Reihenfolge
         ordering: "asc"                     // "asc" = aufsteigend, "desc" = absteigend
@@ -381,7 +381,7 @@ const levels = [
       {
         id: "task8_task_d",
         question: "d) Ordne die Zahlen:\\(-9508; -9058; -9805;  -9059; -9580; +9058\\)",
-        type: "number_ordering",
+        type: "number_ordering_drag",
         answer: { 
         values: [-9805, -9580, -9508, -9059, -9058, +9058],  // Die erwartete Reihenfolge
         ordering: "asc"                     // "asc" = aufsteigend, "desc" = absteigend

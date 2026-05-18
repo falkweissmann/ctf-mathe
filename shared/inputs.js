@@ -102,277 +102,331 @@ registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
   return container;
 });
 // --------------------
-// NUMBER_ORDERING - Zahlen in eine Reihenfolge bringen
-// Beispiel: [-22, -12, -4, 2, 4, 44] mit ordering: "asc" oder "desc"
+// NUMBER_ORDERING_DRAG - Zahlen per Drag & Drop ordnen
 // --------------------
-registerInput("number_ordering", ({ task, onCorrect, initialValue, isSolved }) => {
+registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
-  container.className = "number-ordering-input";
+  container.className = "number-ordering-drag";
   container.style.display = "flex";
   container.style.flexDirection = "column";
-  container.style.gap = "12px";
+  container.style.gap = "16px";
   container.style.marginTop = "10px";
-  container.style.padding = "12px";
+  container.style.padding = "15px";
   container.style.background = "#f9f9f9";
-  container.style.borderRadius = "8px";
+  container.style.borderRadius = "12px";
   container.style.border = "1px solid #e0e0e0";
 
-  const expectedValues = [...task.answer.values]; // Ursprüngliche Reihenfolge
-  const ordering = task.answer.ordering || "asc"; // "asc" (klein nach groß) oder "desc" (groß nach klein)
+  const expectedValues = [...task.answer.values];
+  const ordering = task.answer.ordering || "asc";
   const totalNumbers = expectedValues.length;
 
-  // Zahlen für die Anzeige (zufällig gemischt für die Eingabe)
+  // Initiale gemischte Reihenfolge
   let shuffledNumbers = [...expectedValues];
-  if (!isSolved) {
-    // Zufällig mischen für die Eingabe (nur wenn nicht bereits gelöst)
+  if (!isSolved && (!initialValue || initialValue.length === 0)) {
     for (let i = shuffledNumbers.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffledNumbers[i], shuffledNumbers[j]] = [shuffledNumbers[j], shuffledNumbers[i]];
     }
+  } else if (initialValue && initialValue.length > 0) {
+    shuffledNumbers = [...initialValue];
   }
 
-  // Kopfzeile mit Anweisung
+  // Kopfzeile
   const instruction = document.createElement("div");
-  instruction.style.fontSize = "13px";
-  instruction.style.color = "#666";
-  instruction.style.marginBottom = "8px";
+  instruction.style.fontSize = "14px";
+  instruction.style.fontWeight = "bold";
+  instruction.style.color = "#333";
   instruction.style.textAlign = "center";
+  instruction.style.padding = "8px";
+  instruction.style.background = "#e8f0fe";
+  instruction.style.borderRadius = "8px";
   
   if (ordering === "asc") {
-    instruction.innerHTML = "📊 Ordne die Zahlen von <strong>klein nach groß</strong> (aufsteigend):";
+    instruction.innerHTML = "🎯 Ziehe die Zahlen in die richtige Reihenfolge (klein → groß)";
   } else {
-    instruction.innerHTML = "📊 Ordne die Zahlen von <strong>groß nach klein</strong> (absteigend):";
+    instruction.innerHTML = "🎯 Ziehe die Zahlen in die richtige Reihenfolge (groß → klein)";
   }
   container.appendChild(instruction);
 
-  // Container für die Eingabefelder mit Ordnungszeichen
-  const inputsContainer = document.createElement("div");
-  inputsContainer.style.display = "flex";
-  inputsContainer.style.flexWrap = "wrap";
-  inputsContainer.style.alignItems = "center";
-  inputsContainer.style.justifyContent = "center";
-  inputsContainer.style.gap = "8px";
-  inputsContainer.style.marginBottom = "12px";
+  // Container für die sortierbaren Elemente
+  const sortableContainer = document.createElement("div");
+  sortableContainer.className = "sortable-container";
+  sortableContainer.style.display = "flex";
+  sortableContainer.style.flexWrap = "wrap";
+  sortableContainer.style.gap = "12px";
+  sortableContainer.style.justifyContent = "center";
+  sortableContainer.style.padding = "20px";
+  sortableContainer.style.background = "white";
+  sortableContainer.style.borderRadius = "10px";
+  sortableContainer.style.minHeight = "100px";
+  sortableContainer.style.border = "2px dashed #ccc";
 
-  const inputs = [];
-  const orderSymbols = [];
+  // Ordnungsanzeige zwischen den Elementen
+  const orderIndicator = document.createElement("div");
+  orderIndicator.style.display = "flex";
+  orderIndicator.style.alignItems = "center";
+  orderIndicator.style.justifyContent = "center";
+  orderIndicator.style.gap = "8px";
+  orderIndicator.style.flexWrap = "wrap";
+  orderIndicator.style.marginTop = "10px";
+  orderIndicator.style.padding = "10px";
+  orderIndicator.style.fontSize = "24px";
+  orderIndicator.style.fontWeight = "bold";
+  orderIndicator.style.color = "#4caf50";
 
-  // Angezeigte Zahlen (zum Mitgeben für die Schüler)
-  const availableNumbersDiv = document.createElement("div");
-  availableNumbersDiv.style.display = "flex";
-  availableNumbersDiv.style.flexWrap = "wrap";
-  availableNumbersDiv.style.gap = "10px";
-  availableNumbersDiv.style.justifyContent = "center";
-  availableNumbersDiv.style.marginBottom = "15px";
-  availableNumbersDiv.style.padding = "8px";
-  availableNumbersDiv.style.background = "#e8f0fe";
-  availableNumbersDiv.style.borderRadius = "8px";
-  
-  const availableLabel = document.createElement("span");
-  availableLabel.textContent = "📋 Verfügbare Zahlen: ";
-  availableLabel.style.fontWeight = "bold";
-  availableLabel.style.fontSize = "13px";
-  availableNumbersDiv.appendChild(availableLabel);
-  
-  shuffledNumbers.forEach(num => {
-    const numBadge = document.createElement("span");
-    numBadge.textContent = num;
-    numBadge.style.background = "#667eea";
-    numBadge.style.color = "white";
-    numBadge.style.padding = "4px 10px";
-    numBadge.style.borderRadius = "20px";
-    numBadge.style.fontSize = "14px";
-    numBadge.style.fontWeight = "bold";
-    availableNumbersDiv.appendChild(numBadge);
-  });
-  container.appendChild(availableNumbersDiv);
+  const orderSymbol = ordering === "asc" ? "<" : ">";
 
-  // Eingabefelder mit Ordnungszeichen dazwischen
-  for (let i = 0; i < totalNumbers; i++) {
-    const fieldWrapper = document.createElement("div");
-    fieldWrapper.style.display = "flex";
-    fieldWrapper.style.alignItems = "center";
-    fieldWrapper.style.gap = "5px";
+  // Drag & Drop Funktionalität
+  let draggedItem = null;
 
-    const input = document.createElement("input");
-    input.type = "number";
-    input.step = "any";
-    input.style.width = "80px";
-    input.style.padding = "8px";
-    input.style.fontSize = "16px";
-    input.style.textAlign = "center";
-    input.style.borderRadius = "6px";
-    input.style.border = "2px solid #ddd";
-
-    // Gespeicherten Wert laden
-    if (initialValue && initialValue[i] !== undefined) {
-      input.value = initialValue[i];
-    }
-
-    if (isSolved) {
-      input.disabled = true;
-      input.classList.add("solved-input");
-    }
-
-    inputs.push(input);
-    fieldWrapper.appendChild(input);
-
-    // Ordnungszeichen nach dem Feld (außer beim letzten)
-    if (i < totalNumbers - 1) {
-      const orderSymbol = document.createElement("span");
-      let symbol = "";
-      if (ordering === "asc") {
-        symbol = "<";
-      } else {
-        symbol = ">";
+  // Erstelle die sortierbaren Karten
+  function renderItems(numbers) {
+    sortableContainer.innerHTML = "";
+    orderIndicator.innerHTML = "";
+    
+    numbers.forEach((num, index) => {
+      const card = document.createElement("div");
+      card.className = "sortable-card";
+      card.setAttribute("data-value", num);
+      card.setAttribute("data-index", index);
+      card.setAttribute("draggable", !isSolved);
+      card.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+      card.style.color = "white";
+      card.style.padding = "12px 20px";
+      card.style.borderRadius = "12px";
+      card.style.fontSize = "18px";
+      card.style.fontWeight = "bold";
+      card.style.cursor = isSolved ? "default" : "grab";
+      card.style.textAlign = "center";
+      card.style.minWidth = "60px";
+      card.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+      card.style.transition = "transform 0.2s, opacity 0.2s";
+      card.textContent = num;
+      
+      if (!isSolved) {
+        card.addEventListener("dragstart", (e) => {
+          draggedItem = card;
+          e.dataTransfer.setData("text/plain", num);
+          card.style.opacity = "0.5";
+        });
+        
+        card.addEventListener("dragend", () => {
+          if (draggedItem) draggedItem.style.opacity = "1";
+          draggedItem = null;
+        });
+        
+        card.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          card.style.transform = "scale(1.05)";
+        });
+        
+        card.addEventListener("dragleave", () => {
+          card.style.transform = "scale(1)";
+        });
+        
+        card.addEventListener("drop", (e) => {
+          e.preventDefault();
+          card.style.transform = "scale(1)";
+          
+          if (!draggedItem || draggedItem === card) return;
+          
+          const newNumbers = [...numbers];
+          const fromIndex = newNumbers.indexOf(parseInt(draggedItem.getAttribute("data-value")));
+          const toIndex = parseInt(card.getAttribute("data-index"));
+          
+          if (fromIndex !== -1 && toIndex !== -1) {
+            const [movedItem] = newNumbers.splice(fromIndex, 1);
+            newNumbers.splice(toIndex, 0, movedItem);
+            
+            // Speichern
+            const savedKey = `${task.id}_ordering`;
+            localStorage.setItem(savedKey, JSON.stringify(newNumbers));
+            
+            renderItems(newNumbers);
+          }
+        });
       }
-      orderSymbol.textContent = symbol;
-      orderSymbol.style.fontSize = "20px";
-      orderSymbol.style.fontWeight = "bold";
-      orderSymbol.style.margin = "0 5px";
-      orderSymbol.style.color = "#4caf50";
-      orderSymbols.push(orderSymbol);
-      fieldWrapper.appendChild(orderSymbol);
+      
+      sortableContainer.appendChild(card);
+      
+      // Ordnungszeichen zwischen den Karten (außer nach der letzten)
+      if (index < numbers.length - 1) {
+        const symbolSpan = document.createElement("span");
+        symbolSpan.textContent = orderSymbol;
+        symbolSpan.style.fontSize = "28px";
+        symbolSpan.style.fontWeight = "bold";
+        symbolSpan.style.color = "#4caf50";
+        symbolSpan.style.margin = "0 5px";
+        orderIndicator.appendChild(symbolSpan);
+      }
+    });
+    
+    // Ordnungsanzeige zwischen den Karten einfügen
+    const cards = sortableContainer.children;
+    for (let i = 0; i < cards.length - 1; i++) {
+      const symbolSpan = document.createElement("span");
+      symbolSpan.textContent = orderSymbol;
+      symbolSpan.style.fontSize = "28px";
+      symbolSpan.style.fontWeight = "bold";
+      symbolSpan.style.color = "#4caf50";
+      symbolSpan.style.margin = "0 5px";
+      cards[i].insertAdjacentElement('afterend', symbolSpan);
     }
-
-    inputsContainer.appendChild(fieldWrapper);
   }
-  container.appendChild(inputsContainer);
 
-  // Feedback und Prüf-Button
-  const bottomContainer = document.createElement("div");
-  bottomContainer.style.display = "flex";
-  bottomContainer.style.justifyContent = "space-between";
-  bottomContainer.style.alignItems = "center";
-  bottomContainer.style.marginTop = "8px";
-  bottomContainer.style.gap = "10px";
+  // Reihenfolge prüfen
+  function checkOrdering(currentNumbers) {
+    let isCorrect = true;
+    const tolerance = task.tolerance || 0.01;
+    
+    if (ordering === "asc") {
+      for (let i = 0; i < currentNumbers.length - 1; i++) {
+        if (currentNumbers[i] >= currentNumbers[i + 1] - tolerance) {
+          isCorrect = false;
+          break;
+        }
+      }
+      // Prüfen ob alle Zahlen da sind
+      const userSorted = [...currentNumbers].sort((a, b) => a - b);
+      const expectedSorted = [...expectedValues].sort((a, b) => a - b);
+      for (let i = 0; i < expectedValues.length; i++) {
+        if (Math.abs(userSorted[i] - expectedSorted[i]) > tolerance) {
+          isCorrect = false;
+          break;
+        }
+      }
+    } else {
+      for (let i = 0; i < currentNumbers.length - 1; i++) {
+        if (currentNumbers[i] <= currentNumbers[i + 1] + tolerance) {
+          isCorrect = false;
+          break;
+        }
+      }
+      const userSorted = [...currentNumbers].sort((a, b) => b - a);
+      const expectedSorted = [...expectedValues].sort((a, b) => b - a);
+      for (let i = 0; i < expectedValues.length; i++) {
+        if (Math.abs(userSorted[i] - expectedSorted[i]) > tolerance) {
+          isCorrect = false;
+          break;
+        }
+      }
+    }
+    
+    return isCorrect;
+  }
+
+  // Button und Feedback
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.display = "flex";
+  buttonContainer.style.gap = "10px";
+  buttonContainer.style.justifyContent = "center";
+  buttonContainer.style.marginTop = "10px";
 
   const feedbackDiv = document.createElement("div");
-  feedbackDiv.style.fontSize = "12px";
-  feedbackDiv.style.color = "#666";
-  feedbackDiv.style.flex = "1";
-  feedbackDiv.style.textAlign = "left";
+  feedbackDiv.style.fontSize = "13px";
+  feedbackDiv.style.textAlign = "center";
+  feedbackDiv.style.padding = "8px";
+  feedbackDiv.style.borderRadius = "8px";
+  feedbackDiv.style.marginTop = "10px";
 
   const checkButton = document.createElement("button");
   checkButton.textContent = "✓ Reihenfolge prüfen";
-  checkButton.style.padding = "8px 20px";
+  checkButton.style.padding = "10px 24px";
   checkButton.style.fontSize = "14px";
+  checkButton.style.fontWeight = "bold";
   checkButton.style.cursor = "pointer";
   checkButton.style.background = "#667eea";
   checkButton.style.color = "white";
   checkButton.style.border = "none";
-  checkButton.style.borderRadius = "6px";
+  checkButton.style.borderRadius = "25px";
   checkButton.style.transition = "all 0.2s";
 
-  checkButton.onmouseenter = () => checkButton.style.transform = "scale(1.02)";
-  checkButton.onmouseleave = () => checkButton.style.transform = "scale(1)";
+  const resetButton = document.createElement("button");
+  resetButton.textContent = "🔄 Mischen";
+  resetButton.style.padding = "10px 24px";
+  resetButton.style.fontSize = "14px";
+  resetButton.style.fontWeight = "bold";
+  resetButton.style.cursor = "pointer";
+  resetButton.style.background = "#ff9800";
+  resetButton.style.color = "white";
+  resetButton.style.border = "none";
+  resetButton.style.borderRadius = "25px";
+  resetButton.style.transition = "all 0.2s";
 
-  bottomContainer.appendChild(feedbackDiv);
-  bottomContainer.appendChild(checkButton);
-  container.appendChild(bottomContainer);
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+    resetButton.disabled = true;
+    resetButton.style.opacity = "0.5";
+  }
 
-  // Validierungsfunktion
-  const validate = () => {
+  resetButton.onclick = () => {
     if (isSolved) return;
+    const newShuffled = [...expectedValues];
+    for (let i = newShuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newShuffled[i], newShuffled[j]] = [newShuffled[j], newShuffled[i]];
+    }
+    renderItems(newShuffled);
+    feedbackDiv.innerHTML = "";
+    feedbackDiv.style.background = "";
+    const savedKey = `${task.id}_ordering`;
+    localStorage.setItem(savedKey, JSON.stringify(newShuffled));
+  };
 
-    const userValues = inputs.map(input => {
-      const val = parseFloat(input.value);
-      return isNaN(val) ? null : val;
+  checkButton.onclick = () => {
+    if (isSolved) return;
+    
+    const currentNumbers = [];
+    const cards = sortableContainer.querySelectorAll(".sortable-card");
+    cards.forEach(card => {
+      currentNumbers.push(parseInt(card.getAttribute("data-value")));
     });
-
-    const allFilled = userValues.every(v => v !== null);
-
-    if (!allFilled) {
-      feedbackDiv.innerHTML = "⚠️ Bitte alle Felder ausfüllen";
-      feedbackDiv.style.color = "#ff9800";
-      return;
-    }
-
-    // Prüfen ob die Reihenfolge stimmt
-    let isCorrect = true;
-    const tolerance = task.tolerance || 0.01;
-
-    if (ordering === "asc") {
-      // Aufsteigend prüfen
-      for (let i = 0; i < totalNumbers - 1; i++) {
-        if (userValues[i] >= userValues[i + 1] - tolerance) {
-          isCorrect = false;
-          break;
-        }
-      }
-      // Zusätzlich prüfen, ob alle erwarteten Zahlen vorhanden sind (Menge)
-      const userSorted = [...userValues].sort((a, b) => a - b);
-      const expectedSorted = [...expectedValues].sort((a, b) => a - b);
-      for (let i = 0; i < totalNumbers; i++) {
-        if (Math.abs(userSorted[i] - expectedSorted[i]) > tolerance) {
-          isCorrect = false;
-          break;
-        }
-      }
-    } else {
-      // Absteigend prüfen
-      for (let i = 0; i < totalNumbers - 1; i++) {
-        if (userValues[i] <= userValues[i + 1] + tolerance) {
-          isCorrect = false;
-          break;
-        }
-      }
-      // Zusätzlich prüfen, ob alle erwarteten Zahlen vorhanden sind (Menge)
-      const userSorted = [...userValues].sort((a, b) => b - a);
-      const expectedSorted = [...expectedValues].sort((a, b) => b - a);
-      for (let i = 0; i < totalNumbers; i++) {
-        if (Math.abs(userSorted[i] - expectedSorted[i]) > tolerance) {
-          isCorrect = false;
-          break;
-        }
-      }
-    }
-
+    
+    const isCorrect = checkOrdering(currentNumbers);
+    
     if (isCorrect) {
-      feedbackDiv.innerHTML = "✅ Richtig! Die Reihenfolge ist korrekt!";
+      feedbackDiv.innerHTML = "✅ Richtig! Die Reihenfolge ist korrekt! 🎉";
+      feedbackDiv.style.background = "#e8f5e9";
       feedbackDiv.style.color = "#2e7d32";
-      
-      inputs.forEach(input => {
-        input.classList.add("correct");
-        input.disabled = true;
-      });
       checkButton.disabled = true;
       checkButton.style.background = "#4caf50";
       checkButton.textContent = "✓ Gelöst";
-      onCorrect(userValues);
+      resetButton.disabled = true;
+      resetButton.style.opacity = "0.5";
+      
+      // Alle Karten nicht mehr dragbar machen
+      document.querySelectorAll(".sortable-card").forEach(card => {
+        card.setAttribute("draggable", false);
+        card.style.cursor = "default";
+      });
+      
+      onCorrect(currentNumbers);
     } else {
       feedbackDiv.innerHTML = "❌ Falsche Reihenfolge! Versuche es noch einmal.";
+      feedbackDiv.style.background = "#ffebee";
       feedbackDiv.style.color = "#c62828";
-      
-      inputs.forEach(input => {
-        input.classList.add("wrong");
-        input.classList.remove("correct");
-      });
       
       setTimeout(() => {
         if (!isSolved) {
-          inputs.forEach(input => input.classList.remove("wrong"));
-          setTimeout(() => {
-            if (!isSolved && feedbackDiv.innerHTML !== "✅ Richtig! Die Reihenfolge ist korrekt!") {
-              feedbackDiv.innerHTML = "";
-            }
-          }, 1000);
+          feedbackDiv.innerHTML = "";
+          feedbackDiv.style.background = "";
         }
-      }, 1500);
+      }, 2000);
     }
   };
 
-  checkButton.onclick = validate;
+  buttonContainer.appendChild(resetButton);
+  buttonContainer.appendChild(checkButton);
   
-  // Enter-Taste im letzten Feld
-  if (inputs.length > 0) {
-    inputs[inputs.length - 1].addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        validate();
-      }
-    });
-  }
+  container.appendChild(sortableContainer);
+  container.appendChild(buttonContainer);
+  container.appendChild(feedbackDiv);
 
+  // Initial rendern
+  renderItems(shuffledNumbers);
+  
   return container;
 });
 // --------------------
