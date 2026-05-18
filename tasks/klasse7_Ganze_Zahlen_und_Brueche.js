@@ -170,14 +170,14 @@ const levels = [
         id: "task4_task_b",
         question: "b) ",
         type: "scalar",
-        answer: 7,
+        answer: 120,
         difficulty: 1,
      },
      {
         id: "task4_task_c",
         question: "c) ",
         type: "scalar",
-        answer: 120,
+        answer: 7,
         difficulty: 1,
      },
      {
@@ -205,7 +205,7 @@ const levels = [
       id: "task5_task_b",
       question: "b) \\(456-853= \\)",
       type: "scalar",
-      answer: -407,
+      answer: -397,
       difficulty: 1
     },
     {
@@ -267,93 +267,126 @@ const levels = [
   ]
 },
   
-  // Aufgabe 6: Vektorgleichungen 1
+  // Aufgabe 6: Lückenrätsel
   {
-    id: "task6_vector_eq1",
+    id: "task6_lueckenraetsel",
     tasks: [
       {
         id: "task6_task_a",
-        question: "a) Lösen Sie nach \\(\\vec{x}\\) auf",
-        type: "vector",
-        answer: { values: [3, 4] },
+        question: "a) ",
+        type: "scalar",
+        answer: -25,
         difficulty: 1
       },
-      {
+       {
         id: "task6_task_b",
-        question: "b) Lösen Sie nach \\(\\vec{x}\\) auf",
-        type: "vector",
-        answer: { values: [6, 6] },
-        difficulty: 2
+        question: "b) ",
+        type: "scalar",
+        answer: -8,
+        difficulty: 1
       },
-      {
+       {
         id: "task6_task_c",
-        question: "c) Lösen Sie nach \\(\\vec{x}\\) auf",
-        type: "vector",
-        answer: { values: [-6, -4, -10] },
+        question: "c) ",
+        type: "scalar",
+        answer: 27,
+        difficulty: 1
+      },
+       {
+        id: "task6_task_d",
+        question: "d) ",
+        type: "scalar",
+        answer: 11,
+        difficulty: 1
+      },
+       {
+        id: "task6_task_e",
+        question: "e) ",
+        type: "scalar",
+        answer: 48,
+        difficulty: 1
+      },
+       {
+        id: "task6_task_f",
+        question: "f) ",
+        type: "scalar",
+        answer: 90,
+        difficulty: 1
+      }
+    ]
+  },
+  
+  // Aufgabe 7: Zahlenstrahlrätsel
+  {
+    id: "task7_zahlenstrahlraetsel",
+     tasks: [
+       {
+        id: "task7_task_a",
+        question: "a) ",
+        type: "scalar",
+        answer: 61,
+        difficulty: 2
+      },
+       {
+        id: "task7_task_b",
+        question: "b) ",
+        type: "scalar",
+        answer: -7,
+        difficulty: 2
+      },
+       {
+        id: "task7_task_c",
+        question: "c) ",
+        type: "scalar",
+        answer: -244,
         difficulty: 2
       }
     ]
   },
   
-  // Aufgabe 7: Vektorgleichungen 2
+  // Aufgabe 8: Zahlen ordnen
   {
-    id: "task7_vector_eq2",
-     tasks: [
-      {
-        id: "task7_task_a",
-        question: "a) Lösen Sie nach \\(\\vec{x}\\) auf",
-        type: "vector",
-        answer: { values: [6, 3, 17] },
-        difficulty: 1
-      },
-      {
-        id: "task7_task_b",
-        question: "b) Lösen Sie nach \\(\\vec{x}\\) auf",
-        type: "vector",
-        answer: { values: [12, 10, 11] },
-        difficulty: 1
-      },
-      {
-        id: "task7_task_c",
-        question: "c) Lösen Sie nach \\(\\vec{x}\\) auf",
-        type: "vector",
-        answer: { values: [0, -2, 0] },
-        difficulty: 1
-      }
-    ]
-  },
-  
-  // Aufgabe 8: Vektorgleichungen 3
-  {
-    id: "task8_vector_eq3",
+    id: "task8_zahlen_ordnen",
     tasks: [
       {
         id: "task8_task_a",
-        question: "a) Lösen Sie nach \\(\\vec{x}\\) auf",
-        type: "vector",
-        answer: { values: [-6, 1] },
-        difficulty: 2
+        question: "a) Ordne die Zahlen:\\(-6057; -5067; -5607; +5076; -5076; - 6507\\)",
+        type: "number_ordering",
+        answer: { 
+        values: [+5076, -5067, -5076, -5607, -6057, -6507],  // Die erwartete Reihenfolge
+        ordering: "asc"                     // "asc" = aufsteigend, "desc" = absteigend
+                },
+        difficulty: 1,
       },
       {
         id: "task8_task_b",
-        question: "b) Lösen Sie nach \\(\\vec{x}\\) auf",
-        type: "vector",
-        answer: { values: [-5, 6] },
-        difficulty: 2
+        question: "b) Ordne die Zahlen:\\(-8032; -8302; +8302; -8023; -8230; -8030\\)",
+        type: "number_ordering",
+        answer: { 
+        values: [+8302, -8023, -8030, -8032, -8230, -8302],  // Die erwartete Reihenfolge
+        ordering: "asc"                     // "asc" = aufsteigend, "desc" = absteigend
+                },
+        difficulty: 1,
       },
       {
         id: "task8_task_c",
-        question: "c) Lösen Sie nach \\(\\vec{x}\\) auf",
-        type: "vector",
-        answer: { values: [-2, 1] },
-        difficulty: 2
+        question: "c) Ordne die Zahlen:\\(-4201; +4021; -4012; -4120; -4021; -4210\\)",
+        type: "number_ordering",
+        answer: { 
+        values: [+4021, -4012, -4021, -4120, -4201, -4210],  // Die erwartete Reihenfolge
+        ordering: "asc"                     // "asc" = aufsteigend, "desc" = absteigend
+                },
+        difficulty: 1,
       },
       {
         id: "task8_task_d",
-        question: "d) Lösen Sie nach \\(\\vec{x}\\) auf",
-        type: "vector",
-        answer: { values: [0, -4] },
-        difficulty: 2
+        question: "d) Ordne die Zahlen:\\(-9508; -9058; -9805;  -9059; -9580;+9058\\)",
+        type: "number_ordering",
+        answer: { 
+        values: [+9058, -9058, -9059, -9508, -9580, -9805],  // Die erwartete Reihenfolge
+        ordering: "asc"                     // "asc" = aufsteigend, "desc" = absteigend
+                },
+        difficulty: 1,
       }
     ]
   },

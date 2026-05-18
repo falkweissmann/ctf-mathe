@@ -101,7 +101,280 @@ registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
   container.appendChild(input);
   return container;
 });
+// --------------------
+// NUMBER_ORDERING - Zahlen in eine Reihenfolge bringen
+// Beispiel: [-22, -12, -4, 2, 4, 44] mit ordering: "asc" oder "desc"
+// --------------------
+registerInput("number_ordering", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = document.createElement("div");
+  container.className = "number-ordering-input";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "12px";
+  container.style.marginTop = "10px";
+  container.style.padding = "12px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "8px";
+  container.style.border = "1px solid #e0e0e0";
 
+  const expectedValues = [...task.answer.values]; // Ursprüngliche Reihenfolge
+  const ordering = task.answer.ordering || "asc"; // "asc" (klein nach groß) oder "desc" (groß nach klein)
+  const totalNumbers = expectedValues.length;
+
+  // Zahlen für die Anzeige (zufällig gemischt für die Eingabe)
+  let shuffledNumbers = [...expectedValues];
+  if (!isSolved) {
+    // Zufällig mischen für die Eingabe (nur wenn nicht bereits gelöst)
+    for (let i = shuffledNumbers.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledNumbers[i], shuffledNumbers[j]] = [shuffledNumbers[j], shuffledNumbers[i]];
+    }
+  }
+
+  // Kopfzeile mit Anweisung
+  const instruction = document.createElement("div");
+  instruction.style.fontSize = "13px";
+  instruction.style.color = "#666";
+  instruction.style.marginBottom = "8px";
+  instruction.style.textAlign = "center";
+  
+  if (ordering === "asc") {
+    instruction.innerHTML = "📊 Ordne die Zahlen von <strong>klein nach groß</strong> (aufsteigend):";
+  } else {
+    instruction.innerHTML = "📊 Ordne die Zahlen von <strong>groß nach klein</strong> (absteigend):";
+  }
+  container.appendChild(instruction);
+
+  // Container für die Eingabefelder mit Ordnungszeichen
+  const inputsContainer = document.createElement("div");
+  inputsContainer.style.display = "flex";
+  inputsContainer.style.flexWrap = "wrap";
+  inputsContainer.style.alignItems = "center";
+  inputsContainer.style.justifyContent = "center";
+  inputsContainer.style.gap = "8px";
+  inputsContainer.style.marginBottom = "12px";
+
+  const inputs = [];
+  const orderSymbols = [];
+
+  // Angezeigte Zahlen (zum Mitgeben für die Schüler)
+  const availableNumbersDiv = document.createElement("div");
+  availableNumbersDiv.style.display = "flex";
+  availableNumbersDiv.style.flexWrap = "wrap";
+  availableNumbersDiv.style.gap = "10px";
+  availableNumbersDiv.style.justifyContent = "center";
+  availableNumbersDiv.style.marginBottom = "15px";
+  availableNumbersDiv.style.padding = "8px";
+  availableNumbersDiv.style.background = "#e8f0fe";
+  availableNumbersDiv.style.borderRadius = "8px";
+  
+  const availableLabel = document.createElement("span");
+  availableLabel.textContent = "📋 Verfügbare Zahlen: ";
+  availableLabel.style.fontWeight = "bold";
+  availableLabel.style.fontSize = "13px";
+  availableNumbersDiv.appendChild(availableLabel);
+  
+  shuffledNumbers.forEach(num => {
+    const numBadge = document.createElement("span");
+    numBadge.textContent = num;
+    numBadge.style.background = "#667eea";
+    numBadge.style.color = "white";
+    numBadge.style.padding = "4px 10px";
+    numBadge.style.borderRadius = "20px";
+    numBadge.style.fontSize = "14px";
+    numBadge.style.fontWeight = "bold";
+    availableNumbersDiv.appendChild(numBadge);
+  });
+  container.appendChild(availableNumbersDiv);
+
+  // Eingabefelder mit Ordnungszeichen dazwischen
+  for (let i = 0; i < totalNumbers; i++) {
+    const fieldWrapper = document.createElement("div");
+    fieldWrapper.style.display = "flex";
+    fieldWrapper.style.alignItems = "center";
+    fieldWrapper.style.gap = "5px";
+
+    const input = document.createElement("input");
+    input.type = "number";
+    input.step = "any";
+    input.style.width = "80px";
+    input.style.padding = "8px";
+    input.style.fontSize = "16px";
+    input.style.textAlign = "center";
+    input.style.borderRadius = "6px";
+    input.style.border = "2px solid #ddd";
+
+    // Gespeicherten Wert laden
+    if (initialValue && initialValue[i] !== undefined) {
+      input.value = initialValue[i];
+    }
+
+    if (isSolved) {
+      input.disabled = true;
+      input.classList.add("solved-input");
+    }
+
+    inputs.push(input);
+    fieldWrapper.appendChild(input);
+
+    // Ordnungszeichen nach dem Feld (außer beim letzten)
+    if (i < totalNumbers - 1) {
+      const orderSymbol = document.createElement("span");
+      let symbol = "";
+      if (ordering === "asc") {
+        symbol = "<";
+      } else {
+        symbol = ">";
+      }
+      orderSymbol.textContent = symbol;
+      orderSymbol.style.fontSize = "20px";
+      orderSymbol.style.fontWeight = "bold";
+      orderSymbol.style.margin = "0 5px";
+      orderSymbol.style.color = "#4caf50";
+      orderSymbols.push(orderSymbol);
+      fieldWrapper.appendChild(orderSymbol);
+    }
+
+    inputsContainer.appendChild(fieldWrapper);
+  }
+  container.appendChild(inputsContainer);
+
+  // Feedback und Prüf-Button
+  const bottomContainer = document.createElement("div");
+  bottomContainer.style.display = "flex";
+  bottomContainer.style.justifyContent = "space-between";
+  bottomContainer.style.alignItems = "center";
+  bottomContainer.style.marginTop = "8px";
+  bottomContainer.style.gap = "10px";
+
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "12px";
+  feedbackDiv.style.color = "#666";
+  feedbackDiv.style.flex = "1";
+  feedbackDiv.style.textAlign = "left";
+
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Reihenfolge prüfen";
+  checkButton.style.padding = "8px 20px";
+  checkButton.style.fontSize = "14px";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "6px";
+  checkButton.style.transition = "all 0.2s";
+
+  checkButton.onmouseenter = () => checkButton.style.transform = "scale(1.02)";
+  checkButton.onmouseleave = () => checkButton.style.transform = "scale(1)";
+
+  bottomContainer.appendChild(feedbackDiv);
+  bottomContainer.appendChild(checkButton);
+  container.appendChild(bottomContainer);
+
+  // Validierungsfunktion
+  const validate = () => {
+    if (isSolved) return;
+
+    const userValues = inputs.map(input => {
+      const val = parseFloat(input.value);
+      return isNaN(val) ? null : val;
+    });
+
+    const allFilled = userValues.every(v => v !== null);
+
+    if (!allFilled) {
+      feedbackDiv.innerHTML = "⚠️ Bitte alle Felder ausfüllen";
+      feedbackDiv.style.color = "#ff9800";
+      return;
+    }
+
+    // Prüfen ob die Reihenfolge stimmt
+    let isCorrect = true;
+    const tolerance = task.tolerance || 0.01;
+
+    if (ordering === "asc") {
+      // Aufsteigend prüfen
+      for (let i = 0; i < totalNumbers - 1; i++) {
+        if (userValues[i] >= userValues[i + 1] - tolerance) {
+          isCorrect = false;
+          break;
+        }
+      }
+      // Zusätzlich prüfen, ob alle erwarteten Zahlen vorhanden sind (Menge)
+      const userSorted = [...userValues].sort((a, b) => a - b);
+      const expectedSorted = [...expectedValues].sort((a, b) => a - b);
+      for (let i = 0; i < totalNumbers; i++) {
+        if (Math.abs(userSorted[i] - expectedSorted[i]) > tolerance) {
+          isCorrect = false;
+          break;
+        }
+      }
+    } else {
+      // Absteigend prüfen
+      for (let i = 0; i < totalNumbers - 1; i++) {
+        if (userValues[i] <= userValues[i + 1] + tolerance) {
+          isCorrect = false;
+          break;
+        }
+      }
+      // Zusätzlich prüfen, ob alle erwarteten Zahlen vorhanden sind (Menge)
+      const userSorted = [...userValues].sort((a, b) => b - a);
+      const expectedSorted = [...expectedValues].sort((a, b) => b - a);
+      for (let i = 0; i < totalNumbers; i++) {
+        if (Math.abs(userSorted[i] - expectedSorted[i]) > tolerance) {
+          isCorrect = false;
+          break;
+        }
+      }
+    }
+
+    if (isCorrect) {
+      feedbackDiv.innerHTML = "✅ Richtig! Die Reihenfolge ist korrekt!";
+      feedbackDiv.style.color = "#2e7d32";
+      
+      inputs.forEach(input => {
+        input.classList.add("correct");
+        input.disabled = true;
+      });
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
+      onCorrect(userValues);
+    } else {
+      feedbackDiv.innerHTML = "❌ Falsche Reihenfolge! Versuche es noch einmal.";
+      feedbackDiv.style.color = "#c62828";
+      
+      inputs.forEach(input => {
+        input.classList.add("wrong");
+        input.classList.remove("correct");
+      });
+      
+      setTimeout(() => {
+        if (!isSolved) {
+          inputs.forEach(input => input.classList.remove("wrong"));
+          setTimeout(() => {
+            if (!isSolved && feedbackDiv.innerHTML !== "✅ Richtig! Die Reihenfolge ist korrekt!") {
+              feedbackDiv.innerHTML = "";
+            }
+          }, 1000);
+        }
+      }, 1500);
+    }
+  };
+
+  checkButton.onclick = validate;
+  
+  // Enter-Taste im letzten Feld
+  if (inputs.length > 0) {
+    inputs[inputs.length - 1].addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        validate();
+      }
+    });
+  }
+
+  return container;
+});
 // --------------------
 // VECTOR - Mit Prüf-Button (Anzeige wie viele falsch sind)
 // --------------------
