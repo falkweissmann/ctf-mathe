@@ -23,59 +23,95 @@ const levels = [
       },
      {
         id: "task1_task_c",
-        question: "c) \\(71+14+(-86)+(-52)=\\)",
+        question: "c) \\(1-46+3-23=\\)",
         type: "scalar",
-        answer: -53,
+        answer: -65,
         difficulty: 1
       },
       {
         id: "task1_task_d",
-        question: "d) \\(71+14+(-86)+(-52)=\\)",
+        question: "d) \\(59-8+73-67=\\)",
         type: "scalar",
-        answer: -53,
+        answer: 57,
         difficulty: 1
       },
+      {
+        id: "task1_task_e",
+        question: "e) \\(23-66+85-43=\\)",
+        type: "scalar",
+        answer: -1,
+        difficulty: 1
+      },
+      {
+        id: "task1_task_f",
+        question: "f) \\(87-50+16-79=\\)",
+        type: "scalar",
+        answer: -26,
+        difficulty: 1
+      },
+      {
+        id: "task1_task_g",
+        question: "g) \\(53-50+70-91=\\)",
+        type: "scalar",
+        answer: -18,
+        difficulty: 1
+      },
+      {
+        id: "task1_task_h",
+        question: "h) \\75+99+92+40=\\)",
+        type: "scalar",
+        answer: 306,
+        difficulty: 1
+      }
     ]
   },
   
-  // Aufgabe 2: Normen
+  // Aufgabe 2: Multiplikation und Division
   {
-    id: "task2_norms",
+    id: "task2_multiplication_division",
      tasks: [
       {
         id: "task2_task_a",
-        question: "a) Berechnen Sie die Länge des Vektors \\(\\begin{pmatrix} 5 \\\\ 12 \\end{pmatrix}\\)",
+        question: "a) \\(-2\\cdot(-9)=\\)",
         type: "scalar",
-        answer: 13,
+        answer: 18,
         difficulty: 1,
-        hint: "Dezimalzahlen eingeben als: Punkt statt Komma, 2 Nachkommastellen gerundet. Beispiel: 5.83 (nicht 5,83 oder 5.833)."
       },
       {
         id: "task2_task_b",
-        question: "b) Berechnen Sie die Länge des Vektors \\(\\begin{pmatrix} 5 \\\\ -2 \\\\ 12 \\end{pmatrix}\\)",
+        question: "b) \\(-5\\cdot3=\\)",
         type: "scalar",
-        answer: 13.15,
-        tolerance: 0.01,
+        answer: -15,
         difficulty: 1,
-        hint: "Dezimalzahlen eingeben als: Punkt statt Komma, 2 Nachkommastellen gerundet. Beispiel: 5.83 (nicht 5,83 oder 5.833)."
       },
       {
         id: "task2_task_c",
-        question: "c) Berechnen Sie die Länge des Vektors \\(\\begin{pmatrix} -3 \\\\ -5 \\end{pmatrix}\\)",
+        question: "c) \\(-16\\div4=\\)",
         type: "scalar",
-        answer: 5.83,
-        tolerance: 0.01,
+        answer: -4,
         difficulty: 1,
-        hint: "Dezimalzahlen eingeben als: Punkt statt Komma, 2 Nachkommastellen gerundet. Beispiel: 5.83 (nicht 5,83 oder 5.833)."
       },
       {
         id: "task2_task_d",
-        question: "d) Berechnen Sie die Länge des Vektors \\(\\begin{pmatrix} 4 \\\\ 6 \\\\ 12\\end{pmatrix}\\)",
+        question: "d) \\(-(-2)\\cdot(-2)=\\)",
         type: "scalar",
-        answer: 14,
+        answer: -2,
         difficulty: 1,
-        hint: "Dezimalzahlen eingeben als: Punkt statt Komma, 2 Nachkommastellen gerundet. Beispiel: 5.83 (nicht 5,83 oder 5.833)."
-      }
+     },
+     {
+        id: "task2_task_e",
+        question: "e) \\(-(-75)\\div 15=\\)",
+        type: "scalar",
+        answer: 3,
+        difficulty: 1,
+     },
+     {
+        id: "task2_task_f",
+        question: "f) \\14\\div(-(-(-7)))=\\)",
+        type: "scalar",
+        answer: -2,
+        difficulty: 1,
+     }
     ]
   },
   
