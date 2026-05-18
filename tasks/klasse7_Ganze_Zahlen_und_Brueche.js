@@ -107,7 +107,7 @@ const levels = [
      },
      {
         id: "task2_task_f",
-        question: "f) \\14\\div(-(-(-7)))=\\)",
+        question: "f) \\(14\\div(-(-(-7)))=\\)",
         type: "scalar",
         answer: -2,
         difficulty: 1,
