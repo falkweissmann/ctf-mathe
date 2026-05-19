@@ -650,336 +650,176 @@ const levels = [
       }
     ]
   },
-  
-  // Aufgabe 13: Positionsbestimmung
+  // Aufgabe 18: Quadrataufgaben
   {
-    id: "task10_position",
-    tasks: [
-      {
-        id: "task10_task_a",
-        question: "Die Unsinkable II befindet sich auf:",
-        type: "point",
-        answer: { values: [30, 26] },
-        difficulty: 3
-      }
-    ]
-  },
-  
-  // Aufgabe 14: Skizze (MIT CODE-SCHLÜSSEL)
-{
-  title:"📐", 
-  id: "task11_sketch",
-  tasks: [
-    {
-      id: "task11_task_a",
-      question: "📐 Skizze des Sachverhalts anfertigen",
-      type: "code",
-      answer: { code: "SK11", message: "✏️ Bitte geben Sie den Code von Ihrer Lehrkraft ein." },
-      difficulty: 2,
-      hint: "Die Lehrkraft gibt Ihnen einen Code nach der Besprechung"
-    }
-  ]
-},
-
-// Aufgabe 15: Skizze (MIT CODE-SCHLÜSSEL)
-{
-  title:"📐", 
-  id: "task12_sketch",
-  tasks: [
-    {
-      id: "task12_task_a",
-      question: "📐 Skizze des Sachverhalts anfertigen",
-      type: "code",
-      answer: { code: "AF12", message: "✏️ Bitte geben Sie den Code von Ihrer Lehrkraft ein." },
-      difficulty: 2,
-      hint: "Die Lehrkraft gibt Ihnen einen Code nach der Besprechung"
-    }
-  ]
-},
-
-// Aufgabe 16: Skizze (MIT CODE-SCHLÜSSEL)
-{
-  title:"📐", 
-  id: "task13_sketch",
-  tasks: [
-    {
-      id: "task13_task_a",
-      question: "📐 Skizze des Sachverhalts anfertigen",
-      type: "code",
-      answer: { code: "HK13", message: "✏️ Bitte geben Sie den Code von Ihrer Lehrkraft ein." },
-      difficulty: 2,
-      hint: "Die Lehrkraft gibt Ihnen einen Code nach der Besprechung"
-    }
-  ]
-},
-
-// Aufgabe 17: Skizze (mehrere Teile, ALLE MIT CODE-SCHLÜSSEL)
-{
-  title:"📐", 
-  id: "task14_sketch",
-  tasks: [
-    {
-      id: "task14_task_a",
-      question: "a) Skizze des Sachverhalts anfertigen",
-      type: "code",
-      answer: { code: "UB14", message: "✏️ Bitte geben Sie den Code von Ihrer Lehrkraft ein." },
-      difficulty: 1,
-      hint: "Die Lehrkraft gibt Ihnen einen Code nach der Besprechung"
-    },
-    {
-      id: "task14_task_b",
-      question: "b) Skizze des Sachverhalts anfertigen",
-      type: "code",
-      answer: { code: "UC14", message: "✏️ Bitte geben Sie den Code von Ihrer Lehrkraft ein." },
-      difficulty: 1,
-      hint: "Die Lehrkraft gibt Ihnen einen Code nach der Besprechung"
-    },
-    {
-      id: "task14_task_c",
-      question: "c) Skizze des Sachverhalts anfertigen",
-      type: "code",
-      answer: { code: "AB14", message: "✏️ Bitte geben Sie den Code von Ihrer Lehrkraft ein." },
-      difficulty: 1,
-      hint: "Die Lehrkraft gibt Ihnen einen Code nach der Besprechung"
-    },
-    {
-      id: "task14_task_d",
-      question: "d) Skizze des Sachverhalts anfertigen",
-      type: "code",
-      answer: { code: "UD14", message: "✏️ Bitte geben Sie den Code von Ihrer Lehrkraft ein." },
-      difficulty: 1,
-      hint: "Die Lehrkraft gibt Ihnen einen Code nach der Besprechung"
-    },
-    {
-      id: "task14_task_e",
-      question: "e) Skizze des Sachverhalts anfertigen",
-      type: "code",
-      answer: { code: "AD14", message: "✏️ Bitte geben Sie den Code von Ihrer Lehrkraft ein." },
-      difficulty: 1,
-      hint: "Die Lehrkraft gibt Ihnen einen Code nach der Besprechung"
-    },
-    {
-      id: "task14_task_f",
-      question: "f) Skizze des Sachverhalts anfertigen",
-      type: "code",
-      answer: { code: "UF14", message: "✏️ Bitte geben Sie den Code von Ihrer Lehrkraft ein." },
-      difficulty: 1,
-      hint: "Die Lehrkraft gibt Ihnen einen Code nach der Besprechung"
-    }
-  ]
-},
-  
-  // Aufgabe 18: Nullstellen & y-Achsenabschnitt
-  {
-    id: "task15_roots",
-     tasks: [
-      {
-        id: "task15_task_a",
-        question: "a) \\(f(x) = 2x - 10\\)\nBestimmen Sie die Nullstellen und y-Achsenabschnitt",
-        type: "roots_intercept",
-        answer: { nullstellen: [5], yachsenabschnitt: -10 },
-        difficulty: 1
-      },
-      {
-        id: "task15_task_b",
-        question: "b) \\(f(x) = x³ - 4x\\)\nBestimmen Sie die Nullstellen und y-Achsenabschnitt",
-        type: "roots_intercept",
-        answer: { nullstellen: [-2, 0, 2], yachsenabschnitt: 0 },
-        difficulty: 2
-      },
-      {
-        id: "task15_task_c",
-        question: "c) \\(f(x) = (x+1)² · (x-3)²\\)\nBestimmen Sie die Nullstellen und y-Achsenabschnitt",
-        type: "roots_intercept",
-        answer: { nullstellen: [-1, 3], yachsenabschnitt: 9 },
-        difficulty: 3
-      }
-    ]
-  },
-  
-  // Aufgabe 19: Ableitungen 1
-  {
-    id: "task16_derivatives1",
+    id: "task18_text1",
       tasks: [
       {
-        id: "task16_task_a",
-        question: "a) \\(f(x) = x³  f'(x) = ?\\)",
-        type: "function",
-        answer: { loesung: "3x^2", alternativen: ["3*x^2", "3x²"] },
-        difficulty: 1
+        id: "task18_task_a",
+        question: "a) \\((-2 \\cdot (3 + 1))^2 =  \\)",
+        type: "scalar",
+        answer: 64,
+        difficulty: 2
+      },
+      {  
+        id: "task18_task_b",
+        question: "b) \\((1 - 4)^3 + 5 =   \\)",
+        type: "scalar",
+        answer: -22,
+        difficulty: 2
+      },             
+      {
+        id: "task18_task_c",
+        question: "c) \\((-1 \\cdot (2 + 3))^2 - 4 =   \\)",
+        type: "scalar",
+        answer: 21,
+        difficulty: 2
       },
       {
-        id: "task16_task_b",
-        question: "b) \\(g(x) = 5x²  g'(x) = ?\\)",
-        type: "function",
-        answer: { loesung: "10x", alternativen: ["10*x"] },
-        difficulty: 1
+        id: "task18_task_d",
+        question: "d) \\(((-3) + 2)^3 =  \\)",
+        type: "scalar",
+        answer: -1,
+        difficulty: 2
       },
       {
-        id: "task16_task_c",
-        question: "c) \\(h(x) = 3x² + 6x - 8  h'(x) = ?\\)",
-        type: "function",
-        answer: { loesung: "6x+6", alternativen: ["6*x+6", "6x + 6"] },
-        difficulty: 1
+        id: "task18_task_e",
+        question: "e) \\(2 \\cdot (1 - 3)^2 =   \\)",
+        type: "scalar",
+        answer: 8,
+        difficulty: 2
       },
-       {
-        id: "task16_task_d",
-        question: "d) \\(i(x) = 0,5x^4 + 12x^3 +1,5x^4   i'(x) = ?\\)",
-        type: "function",
-        answer: { loesung: "8x^3+36x^2", alternativen: ["8*x^3+36*x^2"] },
-        difficulty: 1
+      {
+        id: "task18_task_f",
+        question: "f) \\((-1 \\cdot (4 + 1))^2 + 6 =   \\)",
+        type: "scalar",
+        answer: 31,
+        difficulty: 2
       }
     ]
   },
-  
-  // Aufgabe 20: Ableitungen 2
+  // Aufgabe 19: Textaufgabe 7
   {
-    id: "task17_derivatives2",
+    id: "task19_text1",
       tasks: [
       {
-        id: "task17_task_a",
-        question: "a) \\(f(x) = (x²)³  f'(x) = ?\\)",
-        type: "function",
-        answer: { loesung: "6x^5", alternativen: ["6*x^5", "6x⁵"] },
+        id: "task19_task_a",
+        question: "a) Die Temperatur des Föhnwindes in München beträgt:",
+        type: "scalar",
+        answer: 10,
         difficulty: 2
       },
       {
-        id: "task17_task_b",
-        question: "b) \\(g(x) = (1-3x)²  g'(x) = ?\\)",
-        type: "function",
-        answer: { loesung: "18x-6", alternativen: ["18*x-6", "18x - 6"] },
+        id: "task19_task_b",
+        question: "b) Die Temperatur des Föhnwindes in Italien beträgt:",
+        type: "scalar",
+        answer: 15,
         difficulty: 2
-      },
-      {
-        id: "task17_task_c",
-        question: "c) \\(h(x) = (\\frac{1}{√9})·x³  h'(x) = ?\\)",
-        type: "function",
-        answer: { loesung: "x^2", alternativen: ["x²"] },
-        difficulty: 2
-      },
-      {
-        id: "task17_task_d",
-        question: "d) \\(i(x) = \\frac{1}{3}x^3-t^2x^2  i'(x) = ?\\)",
-        type: "function",
-        answer: { loesung: "x^2-2t^2x", alternativen: ["x^2-2*t^2*x,x^2-t^2*2*x,x^2-t^22x"] },
-        difficulty: 2
-      },
-      {
-        id: "task17_task_e",
-        question: "e) \\(j(x) = (2-4x)^2+(3x-x^2)^2  j'(x) = ?\\)",
-        type: "function",
-        answer: { loesung: "4x^3-18x^2+50x-16", alternativen: ["4*x^3-18*x^2+50*x-16"] },
-        difficulty: 2
-      },
-      {
-        id: "task17_task_f",
-        question: "f) \\(k(x) = (1-2x)^2\\cdot(x-3x^2)^2  k'(x) = ?\\)",
-        type: "function",
-        answer: { loesung: "216x^5-300x^4+148x^3-30x^2+2x", alternativen: ["216*x^5-300*x^4+148*x^3-30*x^2+2*x"] },
-        difficulty: 3
       }
     ]
   },
-  
-  // Aufgabe 21: Extremwerte
+  // Aufgabe 20: Brüche Kürzen
   {
-  id: "task18_extrema",
-  tasks: [
-    {
-      id: "task18_task_all",
-      question: "Gegeben ist die Funktion \\(f(x) = \\frac{1}{3}x^3 + \\frac{1}{2}x^2.\\\\\\) Führen Sie eine vollständige Extremwertanalyse durch:",
-      type: "analysis_form",
-      fields: [
-        { id: "f1", label: "f'(x)", type: "function", placeholder: "z.B. 3x^3-2x" },
-        { id: "f2", label: "f''(x)", type: "function", placeholder: "z.B. 9x^2-2" },
-        { id: "roots", label: "f'(x) = 0 → Lösungen", type: "roots", placeholder: "z.B. -3,2" },
-        { id: "max", label: "Anzahl der Maxima", type: "number", placeholder: "0", step: "1" },
-        { id: "min", label: "Anzahl der Minima", type: "number", placeholder: "0", step: "1" }
-      ],
-      answer: {
-        f1: "x^2+x",
-        f1Alternatives: ["x²+x", "x^2 + x", "x*x+x"],
-        f2: "2x+1",
-        f2Alternatives: ["2*x+1", "2x + 1"],
-        roots: [-1, 0],
-        max: 1,
-        min: 1
-      },
-      difficulty: 3,
-      }
-  ]
-},
-  
- // Aufgabe 22: Wendepunkte
-{
-  id: "task19_inflection",
-  tasks: [
-    {
-      id: "task19_task_all",
-      question: "Gegeben ist die Funktion \\(f(x) = \\frac{1}{24}x^4 - \\frac{1}{6}x^3\\). Führen Sie eine vollständige Wendepunktanalyse durch:",
-      type: "analysis_form",
-      fields: [
-        { id: "f2", label: "f''(x)", type: "function", placeholder: "z.B. 3x^3+2x" },
-        { id: "f3", label: "f'''(x)", type: "function", placeholder: "z.B. 9x^2+2" },
-        { id: "roots", label: "f''(x) = 0 → Lösungen", type: "roots", placeholder: "z.B. -1,3" },
-        { id: "inflections", label: "Anzahl der Wendestellen", type: "number", placeholder: "0", step: "1" }
-      ],
-      answer: {
-        f2: "1/2x^2-x",
-        f2Alternatives: ["0.5x^2-x", "0.5*x^2-x", "1/2*x²-x", "0.5x²-x"],
-        f3: "x-1",
-        f3Alternatives: ["1x-1", "1*x-1"],
-        roots: [0, 2],
-        inflections: 2
-      },
-      difficulty: 3,
-    }
-  ]
-},
-  
-  // Aufgabe 23: Nullstellenanzahl
-  {
-    id: "task20_root_count",
+    id: "task20_text1",
       tasks: [
       {
         id: "task20_task_a",
-        question: "Anzahl der Nullstellen:",
+        question: "a) \\( \\frac{4}{6} =  \\)",
         type: "scalar",
-        answer: 3,
-        difficulty: 1
-      }
-    ]
-  },
-  
-  // Aufgabe 24: Extremstellenanzahl
-  {
-    id: "task21_extrema_count",
-      tasks: [
-      {
-        id: "task21_task_a",
-        question: "Anzahl der Extremstellen:",
-        type: "scalar",
-        answer: 2,
-        difficulty: 1
-      }
-    ]
-  },
-  
-  // Aufgabe 25: Insider (MIT HINT)
-  {
-    id: "task22_insider",
-       tasks: [
-      {
-        id: "task22_task_a",
-        question: "Ein Mü ist ein ...",
-        type: "text",
-        answer: "bisschen",
-        alternatives: ["wenig", "Hauch"],
+        answer: 2/3,
         difficulty: 1,
-        hint: "Umgangssprachlich für eine kleine Menge, ähnlich wie 'ein wenig'"
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+      },
+      {  
+        id: "task20_task_b",
+        question: "b) \\(\\frac{9}{12} =   \\)",
+        type: "scalar",
+        answer: 3/4,
+        difficulty: 1,
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+      },             
+      {
+        id: "task20_task_c",
+        question: "c) \\(\\frac{6}{18} =   \\)",
+        type: "scalar",
+        answer: 1/3,
+        difficulty: 1,
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+      },
+      {
+        id: "task20_task_d",
+        question: "d) \\(\\frac{9}{21} =  \\)",
+        type: "scalar",
+        answer: 3/7,
+        difficulty: 1,
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+      },
+      {
+        id: "task20_task_e",
+        question: "e) \\(\\frac{12}{27} =   \\)",
+        type: "scalar",
+        answer: 4/9,
+        difficulty: 1,
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+      },
+      {
+        id: "task20_task_f",
+        question: "f) \\(\\frac{20}{24} =   \\)",
+        type: "scalar",
+        answer: 5/6,
+        difficulty: 1,
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+      },
+      {
+        id: "task20_task_g",
+        question: "g) \\( \\frac{18}{39} =  \\)",
+        type: "scalar",
+        answer: 6/13,
+        difficulty: 1,
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+      },
+      {  
+        id: "task20_task_h",
+        question: "h) \\(\\frac{30}{42} =   \\)",
+        type: "scalar",
+        answer: 5/7,
+        difficulty: 1,
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+      },             
+      {
+        id: "task20_task_i",
+        question: "i) \\(\\frac{120}{150} =   \\)",
+        type: "scalar",
+        answer: 4/5,
+        difficulty: 1,
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+      },
+      {
+        id: "task20_task_j",
+        question: "j) \\(\\frac{126}{210} =  \\)",
+        type: "scalar",
+        answer: 3/5,
+        difficulty: 1,
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+      },
+      {
+        id: "task20_task_k",
+        question: "k) \\(\\frac{135}{180} =   \\)",
+        type: "scalar",
+        answer: 3/4,
+        difficulty: 1,
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+      },
+      {
+        id: "task20_task_l",
+        question: "l) \\(\\frac{198}{306} =   \\)",
+        type: "scalar",
+        answer: 11/17,
+        difficulty: 1,
+        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
       }
     ]
-  }
+  },
 ];
 
 // ============================================
