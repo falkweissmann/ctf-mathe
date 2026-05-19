@@ -31,7 +31,6 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
 
   const expectedValues = [...task.answer.values];
   const ordering = task.answer.ordering || "asc";
-  const totalNumbers = expectedValues.length;
 
   // Initiale gemischte Reihenfolge
   let shuffledNumbers = [...expectedValues];
@@ -53,51 +52,42 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
   instruction.style.padding = "8px";
   instruction.style.background = "#e8f0fe";
   instruction.style.borderRadius = "8px";
+  instruction.style.marginBottom = "10px";
   
   if (ordering === "asc") {
-    instruction.innerHTML = "🎯 Ziehe die Zahlen in die richtige Reihenfolge (klein → groß)";
+    instruction.innerHTML = "🎯 Ziehe die Zahlen in die richtige Reihenfolge!";
   } else {
-    instruction.innerHTML = "🎯 Ziehe die Zahlen in die richtige Reihenfolge (groß → klein)";
+    instruction.innerHTML = "🎯 Ziehe die Zahlen in die richtige Reihenfolge!";
   }
   container.appendChild(instruction);
 
-  // Container für die sortierbaren Elemente
+  // Container für die sortierbaren Elemente (eine Zeile)
   const sortableContainer = document.createElement("div");
   sortableContainer.className = "sortable-container";
   sortableContainer.style.display = "flex";
-  sortableContainer.style.flexWrap = "wrap";
-  sortableContainer.style.gap = "12px";
+  sortableContainer.style.flexDirection = "row";  // ← Eine Zeile
+  sortableContainer.style.flexWrap = "wrap";      // ← Umbrechen bei zu kleinen Bildschirmen
   sortableContainer.style.justifyContent = "center";
-  sortableContainer.style.padding = "20px";
+  sortableContainer.style.alignItems = "center";
+  sortableContainer.style.gap = "8px";
+  sortableContainer.style.padding = "15px";
   sortableContainer.style.background = "white";
   sortableContainer.style.borderRadius = "10px";
-  sortableContainer.style.minHeight = "100px";
-  sortableContainer.style.border = "2px dashed #ccc";
-
-  // Ordnungsanzeige zwischen den Elementen
-  const orderIndicator = document.createElement("div");
-  orderIndicator.style.display = "flex";
-  orderIndicator.style.alignItems = "center";
-  orderIndicator.style.justifyContent = "center";
-  orderIndicator.style.gap = "8px";
-  orderIndicator.style.flexWrap = "wrap";
-  orderIndicator.style.marginTop = "10px";
-  orderIndicator.style.padding = "10px";
-  orderIndicator.style.fontSize = "24px";
-  orderIndicator.style.fontWeight = "bold";
-  orderIndicator.style.color = "#4caf50";
+  sortableContainer.style.border = "2px solid #e0e0e0";
+  sortableContainer.style.minHeight = "80px";
 
   const orderSymbol = ordering === "asc" ? "<" : ">";
 
   // Drag & Drop Funktionalität
   let draggedItem = null;
+  let draggedItemParent = null;
 
   // Erstelle die sortierbaren Karten
   function renderItems(numbers) {
     sortableContainer.innerHTML = "";
-    orderIndicator.innerHTML = "";
     
     numbers.forEach((num, index) => {
+      // Karte erstellen
       const card = document.createElement("div");
       card.className = "sortable-card";
       card.setAttribute("data-value", num);
@@ -114,47 +104,56 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
       card.style.minWidth = "60px";
       card.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
       card.style.transition = "transform 0.2s, opacity 0.2s";
+      card.style.userSelect = "none";
       card.textContent = num;
       
       if (!isSolved) {
         card.addEventListener("dragstart", (e) => {
           draggedItem = card;
+          draggedItemParent = card.parentElement;
           e.dataTransfer.setData("text/plain", num);
           card.style.opacity = "0.5";
+          e.dataTransfer.effectAllowed = "move";
         });
         
         card.addEventListener("dragend", () => {
-          if (draggedItem) draggedItem.style.opacity = "1";
+          if (draggedItem) {
+            draggedItem.style.opacity = "1";
+          }
           draggedItem = null;
+          draggedItemParent = null;
         });
         
         card.addEventListener("dragover", (e) => {
           e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
           card.style.transform = "scale(1.05)";
+          card.style.boxShadow = "0 4px 12px rgba(0,0,0,0.25)";
         });
         
         card.addEventListener("dragleave", () => {
           card.style.transform = "scale(1)";
+          card.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
         });
         
         card.addEventListener("drop", (e) => {
           e.preventDefault();
           card.style.transform = "scale(1)";
+          card.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
           
           if (!draggedItem || draggedItem === card) return;
           
+          // Tausche die Positionen (swap, nicht verschieben)
           const newNumbers = [...numbers];
-          const fromIndex = newNumbers.indexOf(parseInt(draggedItem.getAttribute("data-value")));
-          const toIndex = parseInt(card.getAttribute("data-index"));
+          const fromValue = parseInt(draggedItem.getAttribute("data-value"));
+          const toValue = parseInt(card.getAttribute("data-value"));
           
-          if (fromIndex !== -1 && toIndex !== -1) {
-            const [movedItem] = newNumbers.splice(fromIndex, 1);
-            newNumbers.splice(toIndex, 0, movedItem);
-            
-            // Speichern
-            const savedKey = `${task.id}_ordering`;
-            localStorage.setItem(savedKey, JSON.stringify(newNumbers));
-            
+          const fromIndex = newNumbers.indexOf(fromValue);
+          const toIndex = newNumbers.indexOf(toValue);
+          
+          if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+            // Swap: Nur die beiden Zahlen tauschen
+            [newNumbers[fromIndex], newNumbers[toIndex]] = [newNumbers[toIndex], newNumbers[fromIndex]];
             renderItems(newNumbers);
           }
         });
@@ -162,35 +161,24 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
       
       sortableContainer.appendChild(card);
       
-      // Ordnungszeichen zwischen den Karten (außer nach der letzten)
+      // Ordnungszeichen nach der Karte (außer nach der letzten)
       if (index < numbers.length - 1) {
         const symbolSpan = document.createElement("span");
         symbolSpan.textContent = orderSymbol;
-        symbolSpan.style.fontSize = "28px";
+        symbolSpan.style.fontSize = "24px";
         symbolSpan.style.fontWeight = "bold";
         symbolSpan.style.color = "#4caf50";
-        symbolSpan.style.margin = "0 5px";
-        orderIndicator.appendChild(symbolSpan);
+        symbolSpan.style.margin = "0 4px";
+        symbolSpan.style.userSelect = "none";
+        sortableContainer.appendChild(symbolSpan);
       }
     });
-    
-    // Ordnungsanzeige zwischen den Karten einfügen
-    const cards = sortableContainer.children;
-    for (let i = 0; i < cards.length - 1; i++) {
-      const symbolSpan = document.createElement("span");
-      symbolSpan.textContent = orderSymbol;
-      symbolSpan.style.fontSize = "28px";
-      symbolSpan.style.fontWeight = "bold";
-      symbolSpan.style.color = "#4caf50";
-      symbolSpan.style.margin = "0 5px";
-      cards[i].insertAdjacentElement('afterend', symbolSpan);
-    }
   }
 
   // Reihenfolge prüfen
   function checkOrdering(currentNumbers) {
     let isCorrect = true;
-    const tolerance = task.tolerance || 0.01;
+    const tolerance = 0.01;
     
     if (ordering === "asc") {
       for (let i = 0; i < currentNumbers.length - 1; i++) {
@@ -199,7 +187,7 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
           break;
         }
       }
-      // Prüfen ob alle Zahlen da sind
+      // Prüfen ob alle Zahlen da sind (Menge)
       const userSorted = [...currentNumbers].sort((a, b) => a - b);
       const expectedSorted = [...expectedValues].sort((a, b) => a - b);
       for (let i = 0; i < expectedValues.length; i++) {
@@ -266,12 +254,22 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
   resetButton.style.borderRadius = "25px";
   resetButton.style.transition = "all 0.2s";
 
+  // Nach dem Lösen einer Aufgabe: Alle weiteren Aufgaben sollen noch ziehbar sein
+  // Das Problem war, dass isSolved global für die Aufgabe gilt, nicht für einzelne Karten
+  // Wir müssen den Button deaktivieren, aber nicht die Drag-Funktionalität anderer Aufgaben
+  
   if (isSolved) {
     checkButton.disabled = true;
     checkButton.style.background = "#4caf50";
     checkButton.textContent = "✓ Gelöst";
     resetButton.disabled = true;
     resetButton.style.opacity = "0.5";
+    // Karten nicht mehr dragbar machen
+    const cards = sortableContainer.querySelectorAll(".sortable-card");
+    cards.forEach(card => {
+      card.setAttribute("draggable", false);
+      card.style.cursor = "default";
+    });
   }
 
   resetButton.onclick = () => {
@@ -284,8 +282,6 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
     renderItems(newShuffled);
     feedbackDiv.innerHTML = "";
     feedbackDiv.style.background = "";
-    const savedKey = `${task.id}_ordering`;
-    localStorage.setItem(savedKey, JSON.stringify(newShuffled));
   };
 
   checkButton.onclick = () => {
@@ -309,8 +305,9 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
       resetButton.disabled = true;
       resetButton.style.opacity = "0.5";
       
-      // Alle Karten nicht mehr dragbar machen
-      document.querySelectorAll(".sortable-card").forEach(card => {
+      // Karten nicht mehr dragbar machen
+      const cards = sortableContainer.querySelectorAll(".sortable-card");
+      cards.forEach(card => {
         card.setAttribute("draggable", false);
         card.style.cursor = "default";
       });
