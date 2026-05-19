@@ -390,16 +390,44 @@ const levels = [
     }
   ]
 },
-  // Aufgabe 9
+  // Aufgabe 9 Klammer Auflösen
   {
-    id: "verkuerzung",
+    id: "Klammern_auflösen",
     tasks: [
         {
-        id: "verkuerzung_a",
-        question: "Geben Sie den Vektor \\(\\vec{u}\\) an.",
-        type: "vector",
-        answer: { values: [84,21,-52.5] },
-        difficulty: 2
+        id: "task9_task_a",
+        question: "a) \\(223 - (45 - 31) - [155 + ( -87 - 19)]=\\) ",
+        type: "scalar",
+        answer: 160,
+        difficulty: 1
+        },
+        {
+        id: "task9_task_b",
+        question: "b) \\([120 - (45 + 30)] + (-200 - 85)=\\) ",
+        type: "scalar",
+        answer: -240,
+        difficulty: 1
+        },
+        {
+        id: "task9_task_c",
+        question: "c) \\(350 - [(150 - 50) + 40] - 25=\\) ",
+        type: "scalar",
+        answer: 185,
+        difficulty: 1
+        },
+        {
+        id: "task9_task_d",
+        question: "d) \\((500 - 200) - [120 + (30 - 70)]=\\) ",
+        type: "scalar",
+        answer: 220,
+        difficulty: 1
+        },
+         {
+        id: "task9_task_e",
+        question: "e) \\([250 + (60 - 90)] - (130 - 45)=\\) ",
+        type: "scalar",
+        answer: 135,
+        difficulty: 1
         }
     ]
   },
