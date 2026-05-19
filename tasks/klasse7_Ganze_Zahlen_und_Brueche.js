@@ -533,7 +533,7 @@ const levels = [
         question: "d) \\(34\\cdot(-23) - 17\\cdot(-7)=\\)",
         type: "scalar",
         answer: -663,
-        difficulty: 1
+        difficulty: 2
         },
         {
         id: "task11_task_e",
@@ -561,7 +561,7 @@ const levels = [
         question: "h) \\((-30)\\cdot18-15\\cdot(-6)=\\)",
         type: "scalar",
         answer: -450,
-        difficulty: 1
+        difficulty: 2
         },
         {
         id: "task11_task_i",
@@ -572,23 +572,81 @@ const levels = [
         }
     ]
   },
-  // Aufgabe 12: Bewegungsaufgabe
+  // Aufgabe 12: Textaufgabe 1
   {
-    id: "task9_motion",
+    id: "task12_text1",
       tasks: [
       {
-        id: "task9_task_a",
-        question: "Zurückgelegte Längeneinheiten (LE):",
+        id: "task12_task_a",
+        question: "Der Kontostand nach dem Zusammenführen der Konten beträgt:",
         type: "scalar",
-        answer: 10,
-        difficulty: 1
-      },
+        answer: -2450,
+        difficulty: 2
+      }
+    ]
+  },
+  // Aufgabe 13: Textaufgabe 2
+  {
+    id: "task13_text1",
+      tasks: [
       {
-        id: "task9_task_b",
-        question: "Geschwindigkeit in LE/h:",
+        id: "task13_task_a",
+        question: "Lena's Geldbeträge sind:",
         type: "scalar",
-        answer: 30,
-        difficulty: 1
+        answer: 180,
+        difficulty: 2
+      }
+    ]
+  },
+  // Aufgabe 14: Textaufgabe 3
+  {
+    id: "task14_text1",
+      tasks: [
+      {
+        id: "task14_task_a",
+        question: "Tom's Gesamtpunkte betragen",
+        type: "scalar",
+        answer: 25,
+        difficulty: 2
+      }
+    ]
+  },
+  // Aufgabe 15: Textaufgabe 4
+  {
+    id: "task15_text1",
+      tasks: [
+      {
+        id: "task15_task_a",
+        question: "Der Gesamtbestand an Früchten im Laden beträgt:",
+        type: "scalar",
+        answer: 245,
+        difficulty: 2
+      }
+    ]
+  },
+  // Aufgabe 16: Textaufgabe 5
+  {
+    id: "task16_text1",
+      tasks: [
+      {
+        id: "task16_task_a",
+        question: "Die Temperatur am ersten Tag betrug:",
+        type: "scalar",
+        answer: 27,
+        difficulty: 3
+      }
+    ]
+  },
+  // Aufgabe 17: Textaufgabe 6
+  {
+    id: "task17_text1",
+      tasks: [
+      {
+        id: "task17_task_a",
+        question: "Die Höhe des Wanderers beträgt:",
+        type: "scalar",
+        answer: 2600,
+        difficulty: 2
       }
     ]
   },
