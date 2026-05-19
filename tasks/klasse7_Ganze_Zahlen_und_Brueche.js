@@ -433,42 +433,143 @@ const levels = [
   },
   // Aufgabe 10
   {
-    id: "wanderer",
-      tasks: [
-      {
-        id: "wanderer_a",
-        question: "Länge des Verschiebungsvektors:",
-        type: "scalar",
-        answer: 10,
-        difficulty: 1
+  id: "task_magic_square_1",
+  tasks: [
+    {
+      id: "magic_square_a",
+      question: "Vervollständige das magische Quadrat (alle Zeilen und Spalten haben das gleiche Produkt):",
+      type: "grid_fill",
+      size: 3,
+      operation: "multiplikativ",
+      // Vorgegebene Werte: "leer" bedeutet Eingabefeld
+      given: [
+        [-1, -1, "leer"],
+        [1, "leer", -1],
+        ["leer", 1, "leer"]
+      ],
+      // Lösung (wird zum Prüfen verwendet)
+      answer: {
+        values: [
+          [-1, -1, 1],
+          [1, -1, -1],
+          [-1, 1, -1]
+        ]
       },
-      {
-        id: "wanderer_b",
-        question: "Zurückgelegte Strecke:",
-        type: "scalar",
-        answer: 20,
-        difficulty: 1
-      }
-    ]
-  },
+      difficulty: 2,
+     },
+     {
+      id: "magic_square_b",
+      question: "Vervollständige das magische Quadrat (alle Zeilen und Spalten haben das gleiche Produkt):",
+      type: "grid_fill",
+      size: 3,
+      operation: "multiplikativ",
+      // Vorgegebene Werte: "leer" bedeutet Eingabefeld
+      given: [
+        ["leer", "leer", 1],
+        [1, "leer", -3],
+        ["leer", -1, 2]
+      ],
+      // Lösung (wird zum Prüfen verwendet)
+      answer: {
+        values: [
+          [-2, 3, 1],
+          [1, 2, -3],
+          [3, -1, 2]
+        ]
+      },
+      difficulty: 2,
+     },
+     {
+      id: "magic_square_c",
+      question: "Vervollständige das magische Quadrat (alle Zeilen und Spalten haben das gleiche Produkt):",
+      type: "grid_fill",
+      size: 3,
+      operation: "multiplikativ",
+      // Vorgegebene Werte: "leer" bedeutet Eingabefeld
+      given: [
+        [-2, -3, "leer"],
+        [3, "leer", "leer"],
+        [-3, "leer", -2]
+      ],
+      // Lösung (wird zum Prüfen verwendet)
+      answer: {
+        values: [
+        [-2, -3, 3],
+        [3, -2,-3],
+        [-3, 3, -2]
+        ]
+      },
+      difficulty: 2,
+     }
+  ]
+},
   // Aufgabe 11
     {
-    id: "verschiebung",
+    id: "Ausklammern",
     tasks: [
         {
-        id: "verschiebung_a",
-        question: "Geben Sie den Vektor \\(\\vec{w}\\) an.",
-        type: "vector",
-        answer: { values: [14,0] },
-        difficulty: 2
-        },
-      {
-        id: "verschiebung_b",
-        question: "Länge von \\(\\vec{w}\\):",
+        id: "task11_task_a",
+        question: "a) \\((-4)\\cdot(-16)+(-4)\\cdot7=\\)",
         type: "scalar",
-        answer: 14,
+        answer: 36,
         difficulty: 1
-      }  
+        },
+        {
+        id: "task11_task_b",
+        question: "b) \\(128\\cdot(-7) + (-7)\\cdot(-28)=\\)",
+        type: "scalar",
+        answer: -700,
+        difficulty: 1
+        },
+        {
+        id: "task11_task_c",
+        question: "c) \\(25\\cdot(-19) + 24\\cdot25=\\)",
+        type: "scalar",
+        answer: 125,
+        difficulty: 1
+        },
+         {
+        id: "task11_task_d",
+        question: "d) \\(34\\cdot(-23) - 17\\cdot(-7)=\\)",
+        type: "scalar",
+        answer: -663,
+        difficulty: 1
+        },
+        {
+        id: "task11_task_e",
+        question: "e) \\((-5)\\cdot12+(-5)\\cdot(-8)=\\)",
+        type: "scalar",
+        answer: -20,
+        difficulty: 1
+        },
+        {
+        id: "task11_task_f",
+        question: "f) \\(45\\cdot(-6)+(-6)\\cdot15=\\)",
+        type: "scalar",
+        answer: -360,
+        difficulty: 1
+        },
+        {
+        id: "task11_task_g",
+        question: "g) \\(2,5\\cdot(-4,5)+10\\cdot2,5=\\)",
+        type: "scalar",
+        answer: 13.75,
+        difficulty: 1
+        },
+        {
+        id: "task11_task_h",
+        question: "h) \\((-30)\\cdot18-15\\cdot(-6)=\\)",
+        type: "scalar",
+        answer: -450,
+        difficulty: 1
+        },
+        {
+        id: "task11_task_i",
+        question: "i) \\((-6)\\cdot15+(-6)\\cdot9=\\)",
+        type: "scalar",
+        answer: -144,
+        difficulty: 1
+        }
     ]
   },
   // Aufgabe 12: Bewegungsaufgabe

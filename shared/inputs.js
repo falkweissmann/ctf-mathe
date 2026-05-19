@@ -340,6 +340,346 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
   return container;
 });
 // --------------------
+// GRID_FILL - Gitter ausfüllen (additiv oder multiplikativ)
+// Nur Vergleich der eingegebenen Werte mit der Lösung
+// --------------------
+registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = document.createElement("div");
+  container.className = "grid-fill-input";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.alignItems = "center";
+  container.style.gap = "16px";
+  container.style.marginTop = "10px";
+  container.style.padding = "20px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "12px";
+  container.style.border = "1px solid #e0e0e0";
+
+  // Lösungswerte (3x3 Array)
+  const solutionValues = task.answer.values;
+  
+  // Vorgegebene Startwerte (aus der question)
+  const givenValues = task.given || task.questionGrid || solutionValues.map(row => [...row]);
+  
+  // Gitter-Größe (default 3x3, kann aber auch 2x2, 4x4 etc. sein)
+  const size = task.size || 3;
+  
+  // Operation für Feedback (optional, nur für Anzeige)
+  const operation = task.operation || "additiv"; // "additiv" oder "multiplikativ"
+  
+  // Speicher für die Eingabefelder
+  const inputs = [];
+
+  // Kopfzeile mit Erklärung
+  const instruction = document.createElement("div");
+  instruction.style.fontSize = "14px";
+  instruction.style.fontWeight = "bold";
+  instruction.style.color = "#333";
+  instruction.style.textAlign = "center";
+  instruction.style.padding = "8px";
+  instruction.style.background = "#e8f0fe";
+  instruction.style.borderRadius = "8px";
+  instruction.style.marginBottom = "10px";
+  
+  if (operation === "multiplikativ") {
+    instruction.innerHTML = "✖️ Fülle die leeren Felder aus (multiplikatives Viereck)";
+  } else {
+    instruction.innerHTML = "➕ Fülle die leeren Felder aus (additives Viereck)";
+  }
+  container.appendChild(instruction);
+
+  // Tabelle für das Gitter
+  const table = document.createElement("table");
+  table.style.borderCollapse = "collapse";
+  table.style.margin = "0 auto";
+  table.style.backgroundColor = "white";
+  table.style.borderRadius = "8px";
+  table.style.overflow = "hidden";
+  table.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+
+  // Initiale Werte aus saved data laden
+  let savedValues = null;
+  if (initialValue && Array.isArray(initialValue)) {
+    savedValues = initialValue;
+  }
+
+  // Erstelle das Gitter
+  for (let row = 0; row < size; row++) {
+    const tr = document.createElement("tr");
+    
+    for (let col = 0; col < size; col++) {
+      const td = document.createElement("td");
+      td.style.border = "1px solid #ddd";
+      td.style.padding = "12px";
+      td.style.textAlign = "center";
+      td.style.verticalAlign = "middle";
+      td.style.minWidth = "70px";
+      td.style.minHeight = "70px";
+
+      const givenValue = givenValues[row]?.[col];
+      const solutionValue = solutionValues[row]?.[col];
+      
+      // Prüfen ob das Feld ein Eingabefeld ist
+      const isEmpty = givenValue === null || 
+                      givenValue === undefined || 
+                      givenValue === "leer" || 
+                      givenValue === "" ||
+                      (typeof givenValue === "string" && givenValue.toLowerCase() === "leer");
+      
+      if (!isEmpty && !isSolved) {
+        // Vorgegebene Zahl (nur anzeigen, nicht editierbar)
+        const displaySpan = document.createElement("span");
+        displaySpan.textContent = givenValue;
+        displaySpan.style.fontSize = "20px";
+        displaySpan.style.fontWeight = "bold";
+        displaySpan.style.color = "#333";
+        td.appendChild(displaySpan);
+        td.style.backgroundColor = "#e8f0fe";
+        inputs.push(null);
+        
+      } else if (isSolved) {
+        // Gelöste Aufgabe: Zeige die Lösung an
+        const displaySpan = document.createElement("span");
+        displaySpan.textContent = solutionValue;
+        displaySpan.style.fontSize = "20px";
+        displaySpan.style.fontWeight = "bold";
+        displaySpan.style.color = "#2e7d32";
+        displaySpan.style.backgroundColor = "#e8f5e9";
+        displaySpan.style.padding = "8px 12px";
+        displaySpan.style.borderRadius = "6px";
+        td.appendChild(displaySpan);
+        td.style.backgroundColor = "#f5f5f5";
+        inputs.push(null);
+        
+      } else {
+        // Eingabefeld für leere Zelle
+        const input = document.createElement("input");
+        input.type = "number";
+        input.step = "any";
+        input.style.width = "60px";
+        input.style.padding = "8px";
+        input.style.fontSize = "16px";
+        input.style.textAlign = "center";
+        input.style.borderRadius = "6px";
+        input.style.border = "2px solid #ddd";
+        
+        // Gespeicherten Wert laden
+        if (savedValues && savedValues[row] && savedValues[row][col] !== undefined) {
+          input.value = savedValues[row][col];
+        }
+        
+        td.appendChild(input);
+        td.style.backgroundColor = "#fff";
+        inputs.push({ input, row, col });
+      }
+      
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+  
+  container.appendChild(table);
+
+  // Aktuelle Werte auslesen
+  function getCurrentValues() {
+    const values = Array(size).fill().map(() => Array(size).fill(null));
+    
+    for (const item of inputs) {
+      if (item && item.input) {
+        const val = parseFloat(item.input.value);
+        if (!isNaN(val)) {
+          values[item.row][item.col] = val;
+        }
+      }
+    }
+    
+    // Vorgegebene Werte übernehmen
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        const givenValue = givenValues[row]?.[col];
+        const isEmpty = givenValue === null || 
+                        givenValue === undefined || 
+                        givenValue === "leer" || 
+                        givenValue === "" ||
+                        (typeof givenValue === "string" && givenValue.toLowerCase() === "leer");
+        if (!isEmpty && values[row][col] === null) {
+          values[row][col] = givenValue;
+        }
+      }
+    }
+    
+    return values;
+  }
+
+  // Prüfen ob die eingegebenen Werte mit der Lösung übereinstimmen
+  function validateGrid() {
+    const currentValues = getCurrentValues();
+    let filledCount = 0;
+    let correctCount = 0;
+    
+    // Nur die Eingabefelder prüfen (wo das Feld leer war)
+    for (const item of inputs) {
+      if (item && item.input) {
+        filledCount++;
+        const userValue = currentValues[item.row][item.col];
+        const expectedValue = solutionValues[item.row]?.[item.col];
+        
+        if (userValue !== null && !isNaN(userValue) && Math.abs(userValue - expectedValue) < 0.01) {
+          correctCount++;
+        }
+      }
+    }
+    
+    const allFilled = filledCount > 0 && filledCount === correctCount;
+    const wrongCount = filledCount - correctCount;
+    
+    return { allCorrect: allFilled, correctCount, wrongCount, filledCount };
+  }
+
+  // Button und Feedback
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.display = "flex";
+  buttonContainer.style.gap = "10px";
+  buttonContainer.style.justifyContent = "center";
+  buttonContainer.style.marginTop = "15px";
+
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "13px";
+  feedbackDiv.style.textAlign = "center";
+  feedbackDiv.style.padding = "8px";
+  feedbackDiv.style.borderRadius = "8px";
+  feedbackDiv.style.marginTop = "10px";
+
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Prüfen";
+  checkButton.style.padding = "10px 24px";
+  checkButton.style.fontSize = "14px";
+  checkButton.style.fontWeight = "bold";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "25px";
+  checkButton.style.transition = "all 0.2s";
+
+  const resetButton = document.createElement("button");
+  resetButton.textContent = "🔄 Zurücksetzen";
+  resetButton.style.padding = "10px 24px";
+  resetButton.style.fontSize = "14px";
+  resetButton.style.fontWeight = "bold";
+  resetButton.style.cursor = "pointer";
+  resetButton.style.background = "#ff9800";
+  resetButton.style.color = "white";
+  resetButton.style.border = "none";
+  resetButton.style.borderRadius = "25px";
+  resetButton.style.transition = "all 0.2s";
+
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+    resetButton.disabled = true;
+    resetButton.style.opacity = "0.5";
+  }
+
+  // Reset-Funktion
+  resetButton.onclick = () => {
+    if (isSolved) return;
+    for (const item of inputs) {
+      if (item && item.input) {
+        item.input.value = "";
+        item.input.classList.remove("correct", "wrong");
+      }
+    }
+    feedbackDiv.innerHTML = "";
+    feedbackDiv.style.background = "";
+  };
+
+  // Prüf-Funktion
+  checkButton.onclick = () => {
+    if (isSolved) return;
+    
+    const result = validateGrid();
+    
+    if (result.allCorrect && result.filledCount > 0) {
+      feedbackDiv.innerHTML = `✅ Richtig! 🎉`;
+      feedbackDiv.style.background = "#e8f5e9";
+      feedbackDiv.style.color = "#2e7d32";
+      
+      // Alle Eingabefelder als korrekt markieren und deaktivieren
+      for (const item of inputs) {
+        if (item && item.input) {
+          item.input.classList.add("correct");
+          item.input.disabled = true;
+        }
+      }
+      
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
+      resetButton.disabled = true;
+      resetButton.style.opacity = "0.5";
+      
+      // Speichern der Lösung
+      const solutionArray = getCurrentValues();
+      onCorrect(solutionArray);
+      
+    } else if (result.filledCount === 0) {
+      feedbackDiv.innerHTML = `⚠️ Bitte fülle die leeren Felder aus!`;
+      feedbackDiv.style.background = "#fff3e0";
+      feedbackDiv.style.color = "#ff9800";
+      
+    } else {
+      const wrongCount = result.wrongCount;
+      if (wrongCount === 1) {
+        feedbackDiv.innerHTML = `❌ 1 Feld ist falsch. Versuche es noch einmal!`;
+      } else {
+        feedbackDiv.innerHTML = `❌ ${wrongCount} Felder sind falsch. Versuche es noch einmal!`;
+      }
+      feedbackDiv.style.background = "#ffebee";
+      feedbackDiv.style.color = "#c62828";
+      
+      // Markiere die falschen Eingabefelder
+      const currentValues = getCurrentValues();
+      for (const item of inputs) {
+        if (item && item.input) {
+          const userValue = currentValues[item.row][item.col];
+          const expectedValue = solutionValues[item.row]?.[item.col];
+          
+          if (userValue !== null && !isNaN(userValue) && Math.abs(userValue - expectedValue) < 0.01) {
+            item.input.classList.add("correct");
+            item.input.classList.remove("wrong");
+          } else if (item.input.value !== "") {
+            item.input.classList.add("wrong");
+            item.input.classList.remove("correct");
+          } else {
+            item.input.classList.remove("correct", "wrong");
+          }
+        }
+      }
+      
+      // Nach 2 Sekunden die Fehlermarkierung entfernen
+      setTimeout(() => {
+        if (!isSolved) {
+          for (const item of inputs) {
+            if (item && item.input) {
+              item.input.classList.remove("wrong");
+            }
+          }
+        }
+      }, 2000);
+    }
+  };
+
+  buttonContainer.appendChild(resetButton);
+  buttonContainer.appendChild(checkButton);
+  container.appendChild(buttonContainer);
+  container.appendChild(feedbackDiv);
+
+  return container;
+});
+// --------------------
 // SCALAR - Für Listen von Zahlen (wie bei Nullstellen)
 // --------------------
 registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
