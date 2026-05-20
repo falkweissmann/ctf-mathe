@@ -207,7 +207,7 @@ if (task.type === "vector") {
   rowContainer.appendChild(leftSide);
   rowContainer.appendChild(rightSide);
   
-  // Hint (nur für bestimmte Aufgaben)
+    // Hint (nur für bestimmte Aufgaben)
   if (task.hint && !isSolved) {
     const hint = document.createElement("div");
     hint.className = "task-hint";
