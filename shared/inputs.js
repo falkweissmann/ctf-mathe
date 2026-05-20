@@ -680,7 +680,8 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
   return container;
 });
 // --------------------
-// SCALAR - Für Listen von Zahlen (wie bei Nullstellen)
+// SCALAR - Für Zahlen, Brüche und Listen (mit Bruch-Unterstützung)
+// Erkennt: 3/15, 1/2, -3/4, 0.75, -67, 42
 // --------------------
 registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
@@ -691,7 +692,7 @@ registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
 
   const input = document.createElement("input");
   input.type = "text";
-  input.placeholder = "z.B. -67, 42";
+  input.placeholder = "z.B. 3/15, 0.2, -67, 42";
   input.style.width = "200px";
   input.style.padding = "8px";
   input.style.fontSize = "16px";
@@ -706,6 +707,49 @@ registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
     input.classList.add("solved-input");
   }
 
+  // Hilfsfunktion: Bruch in Dezimalzahl umwandeln
+  function parseFraction(value) {
+    if (typeof value !== 'string') return value;
+    
+    const trimmed = value.trim();
+    
+    // Prüfen ob es ein Bruch ist (enthält /)
+    if (trimmed.includes('/')) {
+      const parts = trimmed.split('/');
+      if (parts.length === 2) {
+        const numerator = parseFloat(parts[0].trim());
+        const denominator = parseFloat(parts[1].trim());
+        if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+          return numerator / denominator;
+        }
+      }
+    }
+    
+    // Kein Bruch, normale Zahl
+    return parseFloat(trimmed.replace(",", "."));
+  }
+
+  // Hilfsfunktion: Wert in standardisierte Form für Vergleich
+  function normalizeValue(value) {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      // Bruch parsen
+      if (value.includes('/')) {
+        const parts = value.split('/');
+        if (parts.length === 2) {
+          const numerator = parseFloat(parts[0].trim());
+          const denominator = parseFloat(parts[1].trim());
+          if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+            return numerator / denominator;
+          }
+        }
+      }
+      // Dezimalzahl mit Komma
+      return parseFloat(value.replace(",", "."));
+    }
+    return NaN;
+  }
+
   const validateInput = () => {
     if (input.disabled) return;
 
@@ -715,19 +759,23 @@ registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
       return;
     }
 
+    // Erwartete Antworten (können Zahlen oder Brüche als Strings sein)
     let expectedAnswers = [];
     if (Array.isArray(task.answer)) {
       expectedAnswers = [...task.answer];
     } else {
       expectedAnswers = [task.answer];
     }
-    expectedAnswers.sort((a, b) => a - b);
-
+    
+    // Normalisiere erwartete Antworten (wandle Brüche in Dezimalzahlen um)
+    const normalizedExpected = expectedAnswers.map(ans => normalizeValue(ans)).sort((a, b) => a - b);
+    
+    // Benutzerantwort parsen
     let userAnswers = [];
     const parts = rawValue.split(",");
     for (const part of parts) {
       const trimmed = part.trim();
-      const num = parseFloat(trimmed);
+      const num = parseFraction(trimmed);
       if (!isNaN(num)) {
         userAnswers.push(num);
       }
@@ -736,22 +784,26 @@ registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
 
     let allCorrect = false;
     
-    if (userAnswers.length === expectedAnswers.length) {
+    if (userAnswers.length === normalizedExpected.length && normalizedExpected.length > 0) {
       allCorrect = true;
       const tolerance = task.tolerance || 0.001;
       
-      for (let i = 0; i < expectedAnswers.length; i++) {
-        if (Math.abs(userAnswers[i] - expectedAnswers[i]) >= tolerance) {
+      for (let i = 0; i < normalizedExpected.length; i++) {
+        if (Math.abs(userAnswers[i] - normalizedExpected[i]) >= tolerance) {
           allCorrect = false;
           break;
         }
       }
+    } else if (normalizedExpected.length === 0 && userAnswers.length === 0) {
+      allCorrect = true;
     }
 
     if (allCorrect) {
       input.classList.add("correct");
       input.classList.remove("wrong");
       input.disabled = true;
+      
+      // Speichere die originale Eingabe (nicht die umgewandelte)
       onCorrect(rawValue);
     } else {
       input.classList.add("wrong");

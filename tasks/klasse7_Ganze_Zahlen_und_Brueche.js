@@ -727,99 +727,350 @@ const levels = [
         question: "a) \\( \\frac{4}{6} =  \\)",
         type: "scalar",
         answer: 2/3,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       },
       {  
         id: "task20_task_b",
         question: "b) \\(\\frac{9}{12} =   \\)",
         type: "scalar",
         answer: 3/4,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       },             
       {
         id: "task20_task_c",
         question: "c) \\(\\frac{6}{18} =   \\)",
         type: "scalar",
         answer: 1/3,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       },
       {
         id: "task20_task_d",
         question: "d) \\(\\frac{9}{21} =  \\)",
         type: "scalar",
         answer: 3/7,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       },
       {
         id: "task20_task_e",
         question: "e) \\(\\frac{12}{27} =   \\)",
         type: "scalar",
         answer: 4/9,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       },
       {
         id: "task20_task_f",
         question: "f) \\(\\frac{20}{24} =   \\)",
         type: "scalar",
         answer: 5/6,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       },
       {
         id: "task20_task_g",
         question: "g) \\( \\frac{18}{39} =  \\)",
         type: "scalar",
         answer: 6/13,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       },
       {  
         id: "task20_task_h",
         question: "h) \\(\\frac{30}{42} =   \\)",
         type: "scalar",
         answer: 5/7,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       },             
       {
         id: "task20_task_i",
         question: "i) \\(\\frac{120}{150} =   \\)",
         type: "scalar",
         answer: 4/5,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       },
       {
         id: "task20_task_j",
         question: "j) \\(\\frac{126}{210} =  \\)",
         type: "scalar",
         answer: 3/5,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       },
       {
         id: "task20_task_k",
         question: "k) \\(\\frac{135}{180} =   \\)",
         type: "scalar",
         answer: 3/4,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       },
       {
         id: "task20_task_l",
         question: "l) \\(\\frac{198}{306} =   \\)",
         type: "scalar",
         answer: 11/17,
-        difficulty: 1,
-        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
+        difficulty: 1
       }
     ]
   },
+  // Aufgabe 21: Brüche Erweitern
+  {
+    id: "task21_text1",
+      tasks: [
+      {
+        id: "task21_task_a",
+        question: "a) \\( \\frac{8}{12} =  \\)",
+        type: "scalar",
+        answer: 96/144,
+        difficulty: 1
+      },
+      {
+        id: "task21_task_b",
+        question: "b) \\( \\frac{3}{5} =  \\)",
+        type: "scalar",
+        answer: 9/15,
+        difficulty: 1
+      },
+      {
+        id: "task21_task_c",
+        question: "c) \\( \\frac{7}{8} =  \\)",
+        type: "scalar",
+        answer: 49/56,
+        difficulty: 1
+      },
+      {
+        id: "task21_task_d",
+        question: "d) \\( \\frac{21}{3} =  \\)",
+        type: "scalar",
+        answer: 147/21,
+        difficulty: 1
+      },
+      {
+        id: "task21_task_e",
+        question: "e) \\( \\frac{2}{13} =  \\)",
+        type: "scalar",
+        answer: 6/39,
+        difficulty: 1
+      },
+      {
+        id: "task21_task_f",
+        question: "f) \\( \\frac{2}{7} =  \\)",
+        type: "scalar",
+        answer: 24/84,
+        difficulty: 1
+      },
+     ]
+  },
+  // Aufgabe 22: Brüche Addieren und Subtrahieren
+  {
+    id: "task22_text1",
+      tasks: [
+      {
+        id: "task22_task_a",
+        question: "a) ",
+        type: "scalar",
+        answer: 47/40,
+        difficulty: 1
+      },
+      {
+        id: "task22_task_b",
+        question: "b) ",
+        type: "scalar",
+        answer: 3/7,
+        difficulty: 1
+      },
+      {
+        id: "task22_task_c",
+        question: "c) ",
+        type: "scalar",
+        answer: 5/2,
+        difficulty: 1
+      },
+      {
+        id: "task22_task_d",
+        question: "d) ",
+        type: "scalar",
+        answer: 9/10,
+        difficulty: 1
+      },
+      {
+        id: "task22_task_e",
+        question: "e) ",
+        type: "scalar",
+        answer: 23/14,
+        difficulty: 1
+      },
+      {
+        id: "task22_task_f",
+        question: "f) ",
+        type: "scalar",
+        answer: 25/3,
+        difficulty: 1
+      },
+      {
+        id: "task22_task_g",
+        question: "g) ",
+        type: "scalar",
+        answer: 17/14,
+        difficulty: 1
+      },
+      {
+        id: "task22_task_h",
+        question: "h) ",
+        type: "scalar",
+        answer: 23/90,
+        difficulty: 1
+      },
+      {
+        id: "task22_task_i",
+        question: "i) ",
+        type: "scalar",
+        answer: 44/9,
+        difficulty: 1
+      },
+      {
+        id: "task22_task_j",
+        question: "j) ",
+        type: "scalar",
+        answer: 26/55,
+        difficulty: 1
+      },
+      {
+        id: "task22_task_k",
+        question: "k) ",
+        type: "scalar",
+        answer: 0,
+        difficulty: 1
+      },
+      {
+        id: "task22_task_l",
+        question: "l) ",
+        type: "scalar",
+        answer: 24/5,
+        difficulty: 1
+      }
+     ]
+  },
+  // Aufgabe 23: Brüche Multiplizieren
+  {
+    id: "task23_text1",
+      tasks: [
+      {
+        id: "task23_task_a",
+        question: "a) ",
+        type: "scalar",
+        answer: 1/11,
+        difficulty: 1
+      },
+      {
+        id: "task23_task_b",
+        question: "b) ",
+        type: "scalar",
+        answer: 10/49,
+        difficulty: 1
+      },
+      {
+        id: "task23_task_c",
+        question: "c) ",
+        type: "scalar",
+        answer: 2/11,
+        difficulty: 1
+      },
+      {
+        id: "task23_task_d",
+        question: "d) ",
+        type: "scalar",
+        answer: 6,
+        difficulty: 1
+      },
+      {
+        id: "task23_task_e",
+        question: "e) ",
+        type: "scalar",
+        answer: 4/21,
+        difficulty: 1
+      },
+      {
+        id: "task23_task_f",
+        question: "f) ",
+        type: "scalar",
+        answer: 7/4,
+        difficulty: 1
+      },
+      {
+        id: "task23_task_g",
+        question: "g) ",
+        type: "scalar",
+        answer: 2/3,
+        difficulty: 1
+      },
+      {
+        id: "task23_task_h",
+        question: "h) ",
+        type: "scalar",
+        answer: 36/55,
+        difficulty: 1
+      }
+     ]
+  },
+  // Aufgabe 24: Brüche Dividieren
+  {
+    id: "task24_text1",
+      tasks: [
+      {
+        id: "task24_task_a",
+        question: "a) ",
+        type: "scalar",
+        answer: 10/7,
+        difficulty: 1
+      },
+      {
+        id: "task24_task_b",
+        question: "b) ",
+        type: "scalar",
+        answer: 3/4,
+        difficulty: 1
+      },
+      {
+        id: "task24_task_c",
+        question: "c) ",
+        type: "scalar",
+        answer: 6,
+        difficulty: 1
+      },
+      {
+        id: "task24_task_d",
+        question: "d) ",
+        type: "scalar",
+        answer: 27/2,
+        difficulty: 1
+      },
+      {
+        id: "task24_task_e",
+        question: "e) ",
+        type: "scalar",
+        answer: 9/10,
+        difficulty: 1
+      },
+      {
+        id: "task24_task_f",
+        question: "f) ",
+        type: "scalar",
+        answer: 3/2,
+        difficulty: 1
+      },
+      {
+        id: "task24_task_g",
+        question: "g) ",
+        type: "scalar",
+        answer: 6/5,
+        difficulty: 1
+      },
+      {
+        id: "task24_task_h",
+        question: "h) ",
+        type: "scalar",
+        answer: 2,
+        difficulty: 1
+      }
+     ]
+  },
+
 ];
 
 // ============================================
