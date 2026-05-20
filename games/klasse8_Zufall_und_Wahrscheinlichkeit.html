@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#667eea">
+  <title>CTF Math - Klasse 8: Zufall und Wahrscheinlichkeit</title>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+      font-size: 2em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    #app {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .task {
+      background: white;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .task.solved {
+      background: linear-gradient(135deg, #f5f5f5 0%, #e8f5e9 100%);
+      border-left: 4px solid #4caf50;
+    }
+    .task input {
+      padding: 8px 12px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+    }
+    .task input.correct {
+      border-color: #4caf50;
+      background-color: #e8f5e9;
+    }
+    .task input.wrong {
+      border-color: #f44336;
+      background-color: #ffebee;
+    }
+    button {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+    }
+    .vector-input-vertical {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏴‍☠️ Klasse 8 - Zufall und Wahrscheinlichkeit 🚩</h1>
+  <div id="app"></div>
+
+  <!-- WICHTIG: Richtige Reihenfolge! -->
+  <!-- 1. Zuerst die Aufgaben (definiert die levels Variable) -->
+  <script src="../tasks/klasse8_Zufall_und_Wahrscheinlichkeit.js"></script>
+  
+  <!-- 2. Dann die shared Dateien -->
+  <script src="../shared/engine.js"></script>
+  <script src="../shared/inputs.js"></script>
+  <script src="../shared/app.js"></script>
+  
+  <script>
+    // Stelle sicher, dass levels geladen ist
+    console.log("Levels geladen:", typeof levels !== 'undefined' ? levels.length : "FEHLER");
+    
+    // LaTeX nachladen
+    setTimeout(() => {
+      if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: '\\(', right: '\\)', display: false},
+            {left: '\\[', right: '\\]', display: true}
+          ]
+        });
+      }
+    }, 500);
+  </script>
+</body>
+</html>
