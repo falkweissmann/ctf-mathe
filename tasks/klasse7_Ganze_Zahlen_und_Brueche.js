@@ -115,42 +115,38 @@ const levels = [
     ]
   },
   
-   // Aufgabe 3: Zahlenstrahl (MIT CODE-SCHLÜSSEL)
+   // Aufgabe 3: Zahlenstrahl
 {
   title:"📐", 
   id: "task3_sketch",
   tasks: [
     {
-      id: "task3_task_a",
-      question: "📐 Zahlenstrahl anfertigen",
-      type: "code",
-      answer: { code: "SK03", message: "✏️ Bitte gib den Code von deiner Lehrkraft ein." },
-      difficulty: 1,
-      hint: "Die Lehrkraft gibt dir einen Code nach der Besprechung"
+     id: "task3_task_a",
+        question: "a) ",
+        type: "scalar",
+        answer: 2,
+        difficulty: 1,
     },
     {
-      id: "task3_task_b",
-      question: "📐 Zahlenstrahl anfertigen",
-      type: "code",
-      answer: { code: "AF03", message: "✏️ Bitte gib den Code von deiner Lehrkraft ein." },
-      difficulty: 1,
-      hint: "Die Lehrkraft gibt dir einen Code nach der Besprechung"
+     id: "task3_task_b",
+        question: "b) ",
+        type: "scalar",
+        answer: 5,
+        difficulty: 1,
     },
     {
-      id: "task3_task_c",
-      question: "📐 Zahlenstrahl anfertigen",
-      type: "code",
-      answer: { code: "UF03", message: "✏️ Bitte gib den Code von deiner Lehrkraft ein." },
-      difficulty: 1,
-      hint: "Die Lehrkraft gibt dir einen Code nach der Besprechung"
+     id: "task3_task_c",
+        question: "c) ",
+        type: "scalar",
+        answer: 0,
+        difficulty: 1,
     },
     {
-      id: "task3_task_d",
-      question: "📐 Zahlenstrahl anfertigen",
-      type: "code",
-      answer: { code: "HK03", message: "✏️ Bitte gib den Code von deiner Lehrkraft ein." },
-      difficulty: 1,
-      hint: "Die Lehrkraft gibt dir einen Code nach der Besprechung"
+     id: "task3_task_d",
+        question: "d) ",
+        type: "scalar",
+        answer: 0,
+        difficulty: 1,
     }
   ]
 },
