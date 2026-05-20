@@ -88,6 +88,22 @@ createTaskElement(levelIndex, taskIndex, task) {
   content.style.flexDirection = "column";
   content.style.gap = "10px";
   
+  // Hilfsfunktion für LaTeX-Rendering in dynamischen Elementen
+function renderLatexInElement(element) {
+  if (typeof renderMathInElement !== 'undefined') {
+    setTimeout(() => {
+      renderMathInElement(element, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '\\(', right: '\\)', display: false},
+          {left: '\\\\[', right: '\\\\]', display: true}
+        ],
+        throwOnError: false
+      });
+    }, 10);
+  }
+}
   // Frage mit LaTeX-Unterstützung
   const question = document.createElement("div");
   question.className = "task-question";
@@ -207,17 +223,35 @@ if (task.type === "vector") {
   rowContainer.appendChild(leftSide);
   rowContainer.appendChild(rightSide);
   
-    // Hint (nur für bestimmte Aufgaben)
-  if (task.hint && !isSolved) {
-    const hint = document.createElement("div");
-    hint.className = "task-hint";
-    hint.innerHTML = `💡 Tipp: ${task.hint}`;
-    hint.style.fontSize = "12px";
-    hint.style.color = "#666";
-    hint.style.marginTop = "5px";
-    hint.style.fontStyle = "italic";
-    content.appendChild(hint);
+   // Hint (nur für bestimmte Aufgaben)
+if (task.hint && !isSolved) {
+  const hint = document.createElement("div");
+  hint.className = "task-hint";
+  hint.innerHTML = `💡 Tipp: ${task.hint}`;
+  hint.style.fontSize = "12px";
+  hint.style.color = "#666";
+  hint.style.marginTop = "5px";
+  hint.style.fontStyle = "italic";
+  
+  // LaTeX im Hint rendern (wenn renderLatexInElement existiert)
+  if (typeof renderLatexInElement !== 'undefined') {
+    renderLatexInElement(hint);
+  } else if (typeof renderMathInElement !== 'undefined') {
+    // Fallback: direkter Aufruf
+    setTimeout(() => {
+      renderMathInElement(hint, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '\\(', right: '\\)', display: false}
+        ],
+        throwOnError: false
+      });
+    }, 10);
   }
+  
+  content.appendChild(hint);
+}
   
   content.appendChild(rowContainer);
   div.appendChild(content);

@@ -728,7 +728,7 @@ const levels = [
         type: "scalar",
         answer: 2/3,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       },
       {  
         id: "task20_task_b",
@@ -736,7 +736,7 @@ const levels = [
         type: "scalar",
         answer: 3/4,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       },             
       {
         id: "task20_task_c",
@@ -744,7 +744,7 @@ const levels = [
         type: "scalar",
         answer: 1/3,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       },
       {
         id: "task20_task_d",
@@ -752,7 +752,7 @@ const levels = [
         type: "scalar",
         answer: 3/7,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       },
       {
         id: "task20_task_e",
@@ -760,7 +760,7 @@ const levels = [
         type: "scalar",
         answer: 4/9,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       },
       {
         id: "task20_task_f",
@@ -768,7 +768,7 @@ const levels = [
         type: "scalar",
         answer: 5/6,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       },
       {
         id: "task20_task_g",
@@ -776,7 +776,7 @@ const levels = [
         type: "scalar",
         answer: 6/13,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       },
       {  
         id: "task20_task_h",
@@ -784,7 +784,7 @@ const levels = [
         type: "scalar",
         answer: 5/7,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       },             
       {
         id: "task20_task_i",
@@ -792,7 +792,7 @@ const levels = [
         type: "scalar",
         answer: 4/5,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       },
       {
         id: "task20_task_j",
@@ -800,7 +800,7 @@ const levels = [
         type: "scalar",
         answer: 3/5,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       },
       {
         id: "task20_task_k",
@@ -808,7 +808,7 @@ const levels = [
         type: "scalar",
         answer: 3/4,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       },
       {
         id: "task20_task_l",
@@ -816,7 +816,7 @@ const levels = [
         type: "scalar",
         answer: 11/17,
         difficulty: 1,
-        hint: "Schreibe \\(\\frac{1}{2}=\\) 1/2."
+        hint: "Schreibe z.B.: \\(\\frac{1}{2}=\\) 1/2."
       }
     ]
   },
