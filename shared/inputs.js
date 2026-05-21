@@ -2229,7 +2229,609 @@ registerInput("point", ({ task, onCorrect, initialValue, isSolved }) => {
 
   return container;
 });
+// --------------------
+// SET - Für Ergebnismengen (Mengenlehre)
+// Erkennt: {1,2,3}, 1,2,3, {1;2;3}, leere Menge, ∅, { }
+// --------------------
+registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = document.createElement("div");
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "8px";
+  container.style.alignItems = "flex-end";
+  container.style.width = "100%";
 
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = task.placeholder || "z.B. {1,2,3} oder 1,2,3 oder leere Menge";
+  input.style.width = "250px";
+  input.style.padding = "10px";
+  input.style.fontSize = "16px";
+  input.style.fontFamily = "monospace";
+  input.style.textAlign = "left";
+
+  if (initialValue) {
+    input.value = initialValue;
+  }
+
+  if (isSolved) {
+    input.disabled = true;
+    input.classList.add("solved-input");
+  }
+
+  // Hilfsfunktion: Normalisiere eine Mengen-Eingabe
+  function normalizeSet(inputStr) {
+    if (!inputStr || inputStr.trim() === "") return null;
+    
+    let cleaned = inputStr.trim();
+    
+    // Leere Menge erkennen
+    if (cleaned === "∅" || 
+        cleaned === "{}" || 
+        cleaned === "{ }" || 
+        cleaned === "leere Menge" || 
+        cleaned === "leer" ||
+        cleaned === "keine" ||
+        cleaned === "nichts") {
+      return []; // Leere Menge
+    }
+    
+    // Entferne geschweifte Klammern, wenn vorhanden
+    if (cleaned.startsWith("{") && cleaned.endsWith("}")) {
+      cleaned = cleaned.slice(1, -1).trim();
+    }
+    
+    // Leere Menge nach Entfernen der Klammern
+    if (cleaned === "") {
+      return [];
+    }
+    
+    // Teile nach Komma oder Semikolon
+    let parts;
+    if (cleaned.includes(",")) {
+      parts = cleaned.split(",");
+    } else if (cleaned.includes(";")) {
+      parts = cleaned.split(";");
+    } else {
+      parts = [cleaned];
+    }
+    
+    // Konvertiere jedes Element zu einer Zahl
+    const numbers = [];
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (trimmed === "") continue;
+      
+      // Bruch erkennen (z.B. 1/2)
+      let num;
+      if (trimmed.includes("/")) {
+        const fractionParts = trimmed.split("/");
+        if (fractionParts.length === 2) {
+          const numerator = parseFloat(fractionParts[0].trim());
+          const denominator = parseFloat(fractionParts[1].trim());
+          if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+            num = numerator / denominator;
+          }
+        }
+      } else {
+        // Normale Zahl (mit Komma als Dezimaltrenner)
+        num = parseFloat(trimmed.replace(",", "."));
+      }
+      
+      if (!isNaN(num)) {
+        numbers.push(num);
+      }
+    }
+    
+    // Sortiere für konsistenten Vergleich
+    numbers.sort((a, b) => a - b);
+    return numbers;
+  }
+
+  // Hilfsfunktion: Vergleiche zwei Mengen
+  function setsAreEqual(set1, set2, tolerance = 0.001) {
+    if (set1 === null || set2 === null) return false;
+    if (set1.length !== set2.length) return false;
+    
+    for (let i = 0; i < set1.length; i++) {
+      if (Math.abs(set1[i] - set2[i]) > tolerance) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Formatierte Anzeige der Menge (für Feedback)
+  function formatSet(set) {
+    if (!set || set.length === 0) return "∅";
+    return "{ " + set.join(", ") + " }";
+  }
+
+  const validateInput = () => {
+    if (input.disabled) return;
+
+    const rawValue = input.value.trim();
+    if (rawValue === "") {
+      input.classList.remove("correct", "wrong");
+      return;
+    }
+
+    // Erwartete Antwort normalisieren
+    let expectedSet;
+    if (Array.isArray(task.answer)) {
+      expectedSet = [...task.answer].sort((a, b) => a - b);
+    } else if (typeof task.answer === 'object' && task.answer.values) {
+      expectedSet = [...task.answer.values].sort((a, b) => a - b);
+    } else {
+      expectedSet = normalizeSet(String(task.answer));
+    }
+    
+    // Benutzerantwort normalisieren
+    const userSet = normalizeSet(rawValue);
+    
+    if (userSet === null) {
+      input.classList.add("wrong");
+      input.classList.remove("correct");
+      return;
+    }
+    
+    const tolerance = task.tolerance || 0.001;
+    const isCorrect = setsAreEqual(userSet, expectedSet, tolerance);
+    
+    // Zusätzlich: Prüfen ob die Reihenfolge der Elemente egal ist
+    // (bereits durch sortieren erledigt)
+    
+    if (isCorrect) {
+      input.classList.add("correct");
+      input.classList.remove("wrong");
+      input.disabled = true;
+      onCorrect(rawValue);
+    } else {
+      input.classList.add("wrong");
+      input.classList.remove("correct");
+    }
+  };
+
+  input.addEventListener("input", validateInput);
+  input.addEventListener("change", validateInput);
+  
+  // Enter-Taste bestätigt die Eingabe
+  input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      validateInput();
+    }
+  });
+
+  container.appendChild(input);
+  
+  return container;
+});
+// --------------------
+// PROBABILITY - Wahrscheinlichkeit mit Ergebnismenge
+// Flexible Felder: set, fraction, decimal, percent
+// --------------------
+registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = document.createElement("div");
+  container.className = "probability-input";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "16px";
+  container.style.marginTop = "10px";
+  container.style.padding = "15px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "12px";
+  container.style.border = "1px solid #e0e0e0";
+
+  // Konfiguration aus der task
+  const fields = task.fields || ["set", "fraction", "decimal", "percent"];
+  const expected = task.answer;
+  
+  // Speicher für die Eingabefelder
+  const inputs = {};
+  const feedbackFields = {};
+
+  // Kopfzeile
+  const instruction = document.createElement("div");
+  instruction.style.fontSize = "14px";
+  instruction.style.fontWeight = "bold";
+  instruction.style.color = "#333";
+  instruction.style.textAlign = "center";
+  instruction.style.padding = "8px";
+  instruction.style.background = "#e8f0fe";
+  instruction.style.borderRadius = "8px";
+  instruction.style.marginBottom = "10px";
+  instruction.innerHTML = task.instruction || "📊 Gib die Ergebnismenge und die Wahrscheinlichkeit in verschiedenen Formen an:";
+  container.appendChild(instruction);
+
+  // Hilfsfunktionen
+  function parseFraction(value) {
+    if (!value || typeof value !== 'string') return NaN;
+    const trimmed = value.trim();
+    if (trimmed.includes('/')) {
+      const parts = trimmed.split('/');
+      if (parts.length === 2) {
+        const numerator = parseFloat(parts[0].trim());
+        const denominator = parseFloat(parts[1].trim());
+        if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+          return numerator / denominator;
+        }
+      }
+    }
+    return parseFloat(trimmed.replace(",", "."));
+  }
+
+  function parseSet(inputStr) {
+    if (!inputStr || inputStr.trim() === "") return null;
+    
+    let cleaned = inputStr.trim();
+    
+    // Leere Menge erkennen
+    if (cleaned === "∅" || cleaned === "{}" || cleaned === "{ }" || 
+        cleaned === "leere Menge" || cleaned === "leer" || cleaned === "keine") {
+      return [];
+    }
+    
+    // Entferne geschweifte Klammern
+    if (cleaned.startsWith("{") && cleaned.endsWith("}")) {
+      cleaned = cleaned.slice(1, -1).trim();
+    }
+    
+    if (cleaned === "") return [];
+    
+    // Teile nach Komma oder Semikolon
+    let parts;
+    if (cleaned.includes(",")) {
+      parts = cleaned.split(",");
+    } else if (cleaned.includes(";")) {
+      parts = cleaned.split(";");
+    } else {
+      parts = [cleaned];
+    }
+    
+    const numbers = [];
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (trimmed === "") continue;
+      
+      let num;
+      if (trimmed.includes("/")) {
+        const fracParts = trimmed.split("/");
+        if (fracParts.length === 2) {
+          const numerator = parseFloat(fracParts[0].trim());
+          const denominator = parseFloat(fracParts[1].trim());
+          if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+            num = numerator / denominator;
+          }
+        }
+      } else {
+        num = parseFloat(trimmed.replace(",", "."));
+      }
+      
+      if (!isNaN(num)) {
+        numbers.push(num);
+      }
+    }
+    
+    numbers.sort((a, b) => a - b);
+    return numbers;
+  }
+
+  function setsAreEqual(set1, set2, tolerance = 0.001) {
+    if (!set1 || !set2) return false;
+    if (set1.length !== set2.length) return false;
+    for (let i = 0; i < set1.length; i++) {
+      if (Math.abs(set1[i] - set2[i]) > tolerance) return false;
+    }
+    return true;
+  }
+
+  // Erstelle die Eingabefelder basierend auf den definierten fields
+  const formContainer = document.createElement("div");
+  formContainer.style.display = "flex";
+  formContainer.style.flexDirection = "column";
+  formContainer.style.gap = "12px";
+
+  for (const field of fields) {
+    const fieldContainer = document.createElement("div");
+    fieldContainer.style.display = "flex";
+    fieldContainer.style.justifyContent = "space-between";
+    fieldContainer.style.alignItems = "center";
+    fieldContainer.style.gap = "15px";
+    fieldContainer.style.flexWrap = "wrap";
+    fieldContainer.style.padding = "8px";
+    fieldContainer.style.background = "white";
+    fieldContainer.style.borderRadius = "8px";
+    fieldContainer.style.border = "1px solid #eee";
+
+    let label, input, expectedValue, placeholder;
+
+    switch (field) {
+      case "set":
+        label = "📦 Ergebnismenge:";
+        expectedValue = expected.set || expected.values || [];
+        placeholder = "z.B. {1,2,3} oder ∅";
+        input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = placeholder;
+        input.style.flex = "1";
+        input.style.padding = "8px";
+        input.style.fontFamily = "monospace";
+        break;
+        
+      case "fraction":
+        label = "📐 Als Bruch:";
+        expectedValue = expected.fraction || "";
+        placeholder = "z.B. 1/2";
+        input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = placeholder;
+        input.style.flex = "1";
+        input.style.padding = "8px";
+        break;
+        
+      case "decimal":
+        label = "🔢 Als Dezimalzahl:";
+        expectedValue = expected.decimal !== undefined ? expected.decimal : 
+                        (typeof expected.value === 'number' ? expected.value : null);
+        placeholder = "z.B. 0.5";
+        input = document.createElement("input");
+        input.type = "number";
+        input.step = "any";
+        input.placeholder = placeholder;
+        input.style.flex = "1";
+        input.style.padding = "8px";
+        break;
+        
+      case "percent":
+        label = "📊 In Prozent:";
+        expectedValue = expected.percent !== undefined ? expected.percent :
+                        (expected.decimal !== undefined ? expected.decimal * 100 : null);
+        placeholder = "z.B. 50%";
+        input = document.createElement("input");
+        input.type = "text";
+        input.placeholder = placeholder;
+        input.style.flex = "1";
+        input.style.padding = "8px";
+        break;
+        
+      default:
+        continue;
+    }
+
+    // Label erstellen
+    const labelSpan = document.createElement("span");
+    labelSpan.innerHTML = `<strong>${label}</strong>`;
+    labelSpan.style.minWidth = "130px";
+    labelSpan.style.fontSize = "14px";
+    
+    // Gespeicherten Wert laden
+    if (initialValue && initialValue[field] !== undefined) {
+      input.value = initialValue[field];
+    }
+    
+    // Bei gelöster Aufgabe deaktivieren
+    if (isSolved) {
+      input.disabled = true;
+      input.classList.add("solved-input");
+      // Zeige die erwartete Lösung an
+      if (field === "set" && Array.isArray(expectedValue)) {
+        const displaySpan = document.createElement("span");
+        displaySpan.style.fontSize = "13px";
+        displaySpan.style.color = "#2e7d32";
+        displaySpan.style.marginLeft = "10px";
+        if (expectedValue.length === 0) {
+          displaySpan.textContent = "✓ ∅";
+        } else {
+          displaySpan.textContent = `✓ {${expectedValue.join(", ")}}`;
+        }
+        fieldContainer.appendChild(displaySpan);
+      } else if (field === "fraction" && expectedValue) {
+        const displaySpan = document.createElement("span");
+        displaySpan.style.fontSize = "13px";
+        displaySpan.style.color = "#2e7d32";
+        displaySpan.style.marginLeft = "10px";
+        displaySpan.textContent = `✓ ${expectedValue}`;
+        fieldContainer.appendChild(displaySpan);
+      } else if (field === "decimal" && expectedValue !== null) {
+        const displaySpan = document.createElement("span");
+        displaySpan.style.fontSize = "13px";
+        displaySpan.style.color = "#2e7d32";
+        displaySpan.style.marginLeft = "10px";
+        displaySpan.textContent = `✓ ${expectedValue}`;
+        fieldContainer.appendChild(displaySpan);
+      } else if (field === "percent" && expectedValue !== null) {
+        const displaySpan = document.createElement("span");
+        displaySpan.style.fontSize = "13px";
+        displaySpan.style.color = "#2e7d32";
+        displaySpan.style.marginLeft = "10px";
+        displaySpan.textContent = `✓ ${expectedValue}%`;
+        fieldContainer.appendChild(displaySpan);
+      }
+    }
+    
+    fieldContainer.appendChild(labelSpan);
+    fieldContainer.appendChild(input);
+    formContainer.appendChild(fieldContainer);
+    
+    inputs[field] = { input, expectedValue, field };
+  }
+
+  container.appendChild(formContainer);
+
+  // Feedback und Buttons
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.display = "flex";
+  buttonContainer.style.gap = "10px";
+  buttonContainer.style.justifyContent = "center";
+  buttonContainer.style.marginTop = "15px";
+
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "13px";
+  feedbackDiv.style.textAlign = "center";
+  feedbackDiv.style.padding = "8px";
+  feedbackDiv.style.borderRadius = "8px";
+  feedbackDiv.style.marginTop = "10px";
+
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Prüfen";
+  checkButton.style.padding = "10px 24px";
+  checkButton.style.fontSize = "14px";
+  checkButton.style.fontWeight = "bold";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "25px";
+  checkButton.style.transition = "all 0.2s";
+
+  const resetButton = document.createElement("button");
+  resetButton.textContent = "🔄 Zurücksetzen";
+  resetButton.style.padding = "10px 24px";
+  resetButton.style.fontSize = "14px";
+  resetButton.style.fontWeight = "bold";
+  resetButton.style.cursor = "pointer";
+  resetButton.style.background = "#ff9800";
+  resetButton.style.color = "white";
+  resetButton.style.border = "none";
+  resetButton.style.borderRadius = "25px";
+  resetButton.style.transition = "all 0.2s";
+
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+    resetButton.disabled = true;
+    resetButton.style.opacity = "0.5";
+  }
+
+  resetButton.onclick = () => {
+    if (isSolved) return;
+    for (const key in inputs) {
+      inputs[key].input.value = "";
+      inputs[key].input.classList.remove("correct", "wrong");
+    }
+    feedbackDiv.innerHTML = "";
+    feedbackDiv.style.background = "";
+  };
+
+  checkButton.onclick = () => {
+    if (isSolved) return;
+    
+    let errorCount = 0;
+    const totalFields = Object.keys(inputs).length;
+    const results = {};
+    
+    // Prüfe jedes Feld
+    for (const key in inputs) {
+      const { input, expectedValue, field } = inputs[key];
+      const userValue = input.value.trim();
+      let isCorrect = false;
+      
+      if (userValue === "") {
+        errorCount++;
+        continue;
+      }
+      
+      switch (field) {
+        case "set":
+          const userSet = parseSet(userValue);
+          const expectedSet = Array.isArray(expectedValue) ? expectedValue : [];
+          isCorrect = setsAreEqual(userSet, expectedSet, 0.001);
+          results.set = userSet;
+          break;
+          
+        case "fraction":
+          const userDecimal = parseFraction(userValue);
+          let expectedDecimal;
+          if (typeof expectedValue === 'string' && expectedValue.includes('/')) {
+            expectedDecimal = parseFraction(expectedValue);
+          } else if (typeof expectedValue === 'number') {
+            expectedDecimal = expectedValue;
+          } else {
+            expectedDecimal = parseFraction(String(expectedValue));
+          }
+          isCorrect = !isNaN(userDecimal) && Math.abs(userDecimal - expectedDecimal) < 0.001;
+          results.fraction = userValue;
+          break;
+          
+        case "decimal":
+          const userNum = parseFloat(userValue);
+          const expectedNum = typeof expectedValue === 'number' ? expectedValue : parseFloat(expectedValue);
+          isCorrect = !isNaN(userNum) && Math.abs(userNum - expectedNum) < 0.001;
+          results.decimal = userNum;
+          break;
+          
+        case "percent":
+          let percentValue = parseFloat(userValue.replace("%", "").trim());
+          let expectedPercent = typeof expectedValue === 'number' ? expectedValue : parseFloat(expectedValue);
+          isCorrect = !isNaN(percentValue) && Math.abs(percentValue - expectedPercent) < 0.1;
+          results.percent = percentValue;
+          break;
+      }
+      
+      if (isCorrect) {
+        input.classList.add("correct");
+        input.classList.remove("wrong");
+      } else {
+        input.classList.add("wrong");
+        input.classList.remove("correct");
+        errorCount++;
+      }
+    }
+    
+    const allCorrect = errorCount === 0 && totalFields > 0;
+    
+    if (allCorrect) {
+      feedbackDiv.innerHTML = `✅ Richtig! 🎉`;
+      feedbackDiv.style.background = "#e8f5e9";
+      feedbackDiv.style.color = "#2e7d32";
+      
+      // Alle Felder deaktivieren
+      for (const key in inputs) {
+        inputs[key].input.disabled = true;
+      }
+      
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
+      resetButton.disabled = true;
+      resetButton.style.opacity = "0.5";
+      
+      onCorrect(results);
+      
+    } else if (totalFields === 0) {
+      feedbackDiv.innerHTML = `⚠️ Keine Felder definiert!`;
+      feedbackDiv.style.background = "#fff3e0";
+      feedbackDiv.style.color = "#ff9800";
+      
+    } else {
+      if (errorCount === 1) {
+        feedbackDiv.innerHTML = `❌ 1 Feld ist falsch. Versuche es noch einmal!`;
+      } else {
+        feedbackDiv.innerHTML = `❌ ${errorCount} Felder sind falsch. Versuche es noch einmal!`;
+      }
+      feedbackDiv.style.background = "#ffebee";
+      feedbackDiv.style.color = "#c62828";
+      
+      // Nach 2 Sekunden die Fehlermarkierung entfernen
+      setTimeout(() => {
+        if (!isSolved) {
+          for (const key in inputs) {
+            inputs[key].input.classList.remove("wrong");
+          }
+        }
+      }, 2000);
+    }
+  };
+
+  buttonContainer.appendChild(resetButton);
+  buttonContainer.appendChild(checkButton);
+  container.appendChild(buttonContainer);
+  container.appendChild(feedbackDiv);
+
+  return container;
+});
 // --------------------
 // TEXT - Für Textantworten
 // --------------------

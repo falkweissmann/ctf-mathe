@@ -9,13 +9,52 @@ const levels = [
        tasks: [
       {
         id: "task1_task_a",
-        question: "a) \\(71+14+(-86)+(-52)=\\)",
-        type: "scalar",
-        answer: -53,
+        question: "a) Ergebnismenge \\(\\Omega\\) des Glücksrades:",
+        type: "set",
+        answer: [1,2,3,4,5,6,7,8,9,10,11,12],
         difficulty: 1
+      },
+      {
+      id: "prob_b",
+      question: "b) Die Zahl ist durch 4 teilbar.",
+      type: "probability",
+      fields: ["set", "fraction", "decimal", "percent"],
+      answer: {
+        set: ["4,8,12"],  // oder ["red"] oder ["r"]
+        fraction: "3/12",
+        decimal: 0.25,
+        percent: 25
+      },
+      difficulty: 1,
+      },
+      {
+      id: "prob_c",
+      question: "c) Die Zahl ist ein Vielfaches von 6.",
+      type: "probability",
+      fields: ["set", "fraction", "decimal", "percent"],
+      answer: {
+        set: ["6,12"],  // oder ["red"] oder ["r"]
+        fraction: "2/12",
+        decimal: 0.167,
+        percent: 16.67
+      },
+      difficulty: 1,
+      },
+      {
+      id: "prob_d",
+      question: "d) Die Zahl ist größer als 4 und kleiner als 11.",
+      type: "probability",
+      fields: ["set", "fraction", "decimal", "percent"],
+      answer: {
+        set: ["5,6,7,8,9,10"],  // oder ["red"] oder ["r"]
+        fraction: "6/12",
+        decimal: 0.5,
+        percent: 50
+      },
+      difficulty: 1,
       }
-    ]
-  },
+              ]
+  },  
   // Aufgabe 2: Lostrommel
   {
     id: "task2_lostrommel",
