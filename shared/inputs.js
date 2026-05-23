@@ -65,8 +65,8 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
   const sortableContainer = document.createElement("div");
   sortableContainer.className = "sortable-container";
   sortableContainer.style.display = "flex";
-  sortableContainer.style.flexDirection = "row";  // ← Eine Zeile
-  sortableContainer.style.flexWrap = "wrap";      // ← Umbrechen bei zu kleinen Bildschirmen
+  sortableContainer.style.flexDirection = "row";
+  sortableContainer.style.flexWrap = "wrap";
   sortableContainer.style.justifyContent = "center";
   sortableContainer.style.alignItems = "center";
   sortableContainer.style.gap = "8px";
@@ -80,14 +80,12 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
 
   // Drag & Drop Funktionalität
   let draggedItem = null;
-  let draggedItemParent = null;
 
   // Erstelle die sortierbaren Karten
   function renderItems(numbers) {
     sortableContainer.innerHTML = "";
     
     numbers.forEach((num, index) => {
-      // Karte erstellen
       const card = document.createElement("div");
       card.className = "sortable-card";
       card.setAttribute("data-value", num);
@@ -110,7 +108,6 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
       if (!isSolved) {
         card.addEventListener("dragstart", (e) => {
           draggedItem = card;
-          draggedItemParent = card.parentElement;
           e.dataTransfer.setData("text/plain", num);
           card.style.opacity = "0.5";
           e.dataTransfer.effectAllowed = "move";
@@ -121,7 +118,6 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
             draggedItem.style.opacity = "1";
           }
           draggedItem = null;
-          draggedItemParent = null;
         });
         
         card.addEventListener("dragover", (e) => {
@@ -143,7 +139,6 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
           
           if (!draggedItem || draggedItem === card) return;
           
-          // Tausche die Positionen (swap, nicht verschieben)
           const newNumbers = [...numbers];
           const fromValue = parseInt(draggedItem.getAttribute("data-value"));
           const toValue = parseInt(card.getAttribute("data-value"));
@@ -152,7 +147,6 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
           const toIndex = newNumbers.indexOf(toValue);
           
           if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
-            // Swap: Nur die beiden Zahlen tauschen
             [newNumbers[fromIndex], newNumbers[toIndex]] = [newNumbers[toIndex], newNumbers[fromIndex]];
             renderItems(newNumbers);
           }
@@ -161,7 +155,6 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
       
       sortableContainer.appendChild(card);
       
-      // Ordnungszeichen nach der Karte (außer nach der letzten)
       if (index < numbers.length - 1) {
         const symbolSpan = document.createElement("span");
         symbolSpan.textContent = orderSymbol;
@@ -187,7 +180,6 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
           break;
         }
       }
-      // Prüfen ob alle Zahlen da sind (Menge)
       const userSorted = [...currentNumbers].sort((a, b) => a - b);
       const expectedSorted = [...expectedValues].sort((a, b) => a - b);
       for (let i = 0; i < expectedValues.length; i++) {
@@ -242,47 +234,16 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
   checkButton.style.borderRadius = "25px";
   checkButton.style.transition = "all 0.2s";
 
-  const resetButton = document.createElement("button");
-  resetButton.textContent = "🔄 Mischen";
-  resetButton.style.padding = "10px 24px";
-  resetButton.style.fontSize = "14px";
-  resetButton.style.fontWeight = "bold";
-  resetButton.style.cursor = "pointer";
-  resetButton.style.background = "#ff9800";
-  resetButton.style.color = "white";
-  resetButton.style.border = "none";
-  resetButton.style.borderRadius = "25px";
-  resetButton.style.transition = "all 0.2s";
-
-  // Nach dem Lösen einer Aufgabe: Alle weiteren Aufgaben sollen noch ziehbar sein
-  // Das Problem war, dass isSolved global für die Aufgabe gilt, nicht für einzelne Karten
-  // Wir müssen den Button deaktivieren, aber nicht die Drag-Funktionalität anderer Aufgaben
-  
   if (isSolved) {
     checkButton.disabled = true;
     checkButton.style.background = "#4caf50";
     checkButton.textContent = "✓ Gelöst";
-    resetButton.disabled = true;
-    resetButton.style.opacity = "0.5";
-    // Karten nicht mehr dragbar machen
     const cards = sortableContainer.querySelectorAll(".sortable-card");
     cards.forEach(card => {
       card.setAttribute("draggable", false);
       card.style.cursor = "default";
     });
   }
-
-  resetButton.onclick = () => {
-    if (isSolved) return;
-    const newShuffled = [...expectedValues];
-    for (let i = newShuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newShuffled[i], newShuffled[j]] = [newShuffled[j], newShuffled[i]];
-    }
-    renderItems(newShuffled);
-    feedbackDiv.innerHTML = "";
-    feedbackDiv.style.background = "";
-  };
 
   checkButton.onclick = () => {
     if (isSolved) return;
@@ -302,10 +263,7 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
       checkButton.disabled = true;
       checkButton.style.background = "#4caf50";
       checkButton.textContent = "✓ Gelöst";
-      resetButton.disabled = true;
-      resetButton.style.opacity = "0.5";
       
-      // Karten nicht mehr dragbar machen
       const cards = sortableContainer.querySelectorAll(".sortable-card");
       cards.forEach(card => {
         card.setAttribute("draggable", false);
@@ -327,21 +285,18 @@ registerInput("number_ordering_drag", ({ task, onCorrect, initialValue, isSolved
     }
   };
 
-  buttonContainer.appendChild(resetButton);
   buttonContainer.appendChild(checkButton);
   
   container.appendChild(sortableContainer);
   container.appendChild(buttonContainer);
   container.appendChild(feedbackDiv);
 
-  // Initial rendern
   renderItems(shuffledNumbers);
   
   return container;
 });
 // --------------------
 // GRID_FILL - Gitter ausfüllen (additiv oder multiplikativ)
-// Nur Vergleich der eingegebenen Werte mit der Lösung
 // --------------------
 registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
@@ -356,22 +311,12 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
   container.style.borderRadius = "12px";
   container.style.border = "1px solid #e0e0e0";
 
-  // Lösungswerte (3x3 Array)
   const solutionValues = task.answer.values;
-  
-  // Vorgegebene Startwerte (aus der question)
   const givenValues = task.given || task.questionGrid || solutionValues.map(row => [...row]);
-  
-  // Gitter-Größe (default 3x3, kann aber auch 2x2, 4x4 etc. sein)
   const size = task.size || 3;
-  
-  // Operation für Feedback (optional, nur für Anzeige)
-  const operation = task.operation || "additiv"; // "additiv" oder "multiplikativ"
-  
-  // Speicher für die Eingabefelder
+  const operation = task.operation || "additiv";
   const inputs = [];
 
-  // Kopfzeile mit Erklärung
   const instruction = document.createElement("div");
   instruction.style.fontSize = "14px";
   instruction.style.fontWeight = "bold";
@@ -389,7 +334,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
   }
   container.appendChild(instruction);
 
-  // Tabelle für das Gitter
   const table = document.createElement("table");
   table.style.borderCollapse = "collapse";
   table.style.margin = "0 auto";
@@ -398,13 +342,11 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
   table.style.overflow = "hidden";
   table.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
 
-  // Initiale Werte aus saved data laden
   let savedValues = null;
   if (initialValue && Array.isArray(initialValue)) {
     savedValues = initialValue;
   }
 
-  // Erstelle das Gitter
   for (let row = 0; row < size; row++) {
     const tr = document.createElement("tr");
     
@@ -420,7 +362,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
       const givenValue = givenValues[row]?.[col];
       const solutionValue = solutionValues[row]?.[col];
       
-      // Prüfen ob das Feld ein Eingabefeld ist
       const isEmpty = givenValue === null || 
                       givenValue === undefined || 
                       givenValue === "leer" || 
@@ -428,7 +369,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
                       (typeof givenValue === "string" && givenValue.toLowerCase() === "leer");
       
       if (!isEmpty && !isSolved) {
-        // Vorgegebene Zahl (nur anzeigen, nicht editierbar)
         const displaySpan = document.createElement("span");
         displaySpan.textContent = givenValue;
         displaySpan.style.fontSize = "20px";
@@ -439,7 +379,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
         inputs.push(null);
         
       } else if (isSolved) {
-        // Gelöste Aufgabe: Zeige die Lösung an
         const displaySpan = document.createElement("span");
         displaySpan.textContent = solutionValue;
         displaySpan.style.fontSize = "20px";
@@ -453,7 +392,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
         inputs.push(null);
         
       } else {
-        // Eingabefeld für leere Zelle
         const input = document.createElement("input");
         input.type = "number";
         input.step = "any";
@@ -464,7 +402,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
         input.style.borderRadius = "6px";
         input.style.border = "2px solid #ddd";
         
-        // Gespeicherten Wert laden
         if (savedValues && savedValues[row] && savedValues[row][col] !== undefined) {
           input.value = savedValues[row][col];
         }
@@ -481,7 +418,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
   
   container.appendChild(table);
 
-  // Aktuelle Werte auslesen
   function getCurrentValues() {
     const values = Array(size).fill().map(() => Array(size).fill(null));
     
@@ -494,7 +430,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
       }
     }
     
-    // Vorgegebene Werte übernehmen
     for (let row = 0; row < size; row++) {
       for (let col = 0; col < size; col++) {
         const givenValue = givenValues[row]?.[col];
@@ -512,13 +447,11 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
     return values;
   }
 
-  // Prüfen ob die eingegebenen Werte mit der Lösung übereinstimmen
   function validateGrid() {
     const currentValues = getCurrentValues();
     let filledCount = 0;
     let correctCount = 0;
     
-    // Nur die Eingabefelder prüfen (wo das Feld leer war)
     for (const item of inputs) {
       if (item && item.input) {
         filledCount++;
@@ -532,12 +465,9 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
     }
     
     const allFilled = filledCount > 0 && filledCount === correctCount;
-    const wrongCount = filledCount - correctCount;
-    
-    return { allCorrect: allFilled, correctCount, wrongCount, filledCount };
+    return { allCorrect: allFilled, correctCount, wrongCount: filledCount - correctCount, filledCount };
   }
 
-  // Button und Feedback
   const buttonContainer = document.createElement("div");
   buttonContainer.style.display = "flex";
   buttonContainer.style.gap = "10px";
@@ -561,42 +491,13 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
   checkButton.style.color = "white";
   checkButton.style.border = "none";
   checkButton.style.borderRadius = "25px";
-  checkButton.style.transition = "all 0.2s";
-
-  const resetButton = document.createElement("button");
-  resetButton.textContent = "🔄 Zurücksetzen";
-  resetButton.style.padding = "10px 24px";
-  resetButton.style.fontSize = "14px";
-  resetButton.style.fontWeight = "bold";
-  resetButton.style.cursor = "pointer";
-  resetButton.style.background = "#ff9800";
-  resetButton.style.color = "white";
-  resetButton.style.border = "none";
-  resetButton.style.borderRadius = "25px";
-  resetButton.style.transition = "all 0.2s";
 
   if (isSolved) {
     checkButton.disabled = true;
     checkButton.style.background = "#4caf50";
     checkButton.textContent = "✓ Gelöst";
-    resetButton.disabled = true;
-    resetButton.style.opacity = "0.5";
   }
 
-  // Reset-Funktion
-  resetButton.onclick = () => {
-    if (isSolved) return;
-    for (const item of inputs) {
-      if (item && item.input) {
-        item.input.value = "";
-        item.input.classList.remove("correct", "wrong");
-      }
-    }
-    feedbackDiv.innerHTML = "";
-    feedbackDiv.style.background = "";
-  };
-
-  // Prüf-Funktion
   checkButton.onclick = () => {
     if (isSolved) return;
     
@@ -607,7 +508,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
       feedbackDiv.style.background = "#e8f5e9";
       feedbackDiv.style.color = "#2e7d32";
       
-      // Alle Eingabefelder als korrekt markieren und deaktivieren
       for (const item of inputs) {
         if (item && item.input) {
           item.input.classList.add("correct");
@@ -618,10 +518,7 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
       checkButton.disabled = true;
       checkButton.style.background = "#4caf50";
       checkButton.textContent = "✓ Gelöst";
-      resetButton.disabled = true;
-      resetButton.style.opacity = "0.5";
       
-      // Speichern der Lösung
       const solutionArray = getCurrentValues();
       onCorrect(solutionArray);
       
@@ -640,7 +537,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
       feedbackDiv.style.background = "#ffebee";
       feedbackDiv.style.color = "#c62828";
       
-      // Markiere die falschen Eingabefelder
       const currentValues = getCurrentValues();
       for (const item of inputs) {
         if (item && item.input) {
@@ -659,7 +555,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
         }
       }
       
-      // Nach 2 Sekunden die Fehlermarkierung entfernen
       setTimeout(() => {
         if (!isSolved) {
           for (const item of inputs) {
@@ -672,7 +567,6 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
     }
   };
 
-  buttonContainer.appendChild(resetButton);
   buttonContainer.appendChild(checkButton);
   container.appendChild(buttonContainer);
   container.appendChild(feedbackDiv);
@@ -680,15 +574,19 @@ registerInput("grid_fill", ({ task, onCorrect, initialValue, isSolved }) => {
   return container;
 });
 // --------------------
-// SCALAR - Für Zahlen, Brüche und Listen (mit Bruch-Unterstützung)
-// Erkennt: 3/15, 1/2, -3/4, 0.75, -67, 42
+// SCALAR - Für Zahlen, Brüche und Listen (mit Bruch-Unterstützung) - MIT PRÜFBUTTON
 // --------------------
 registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
   container.style.display = "flex";
   container.style.flexDirection = "column";
-  container.style.gap = "5px";
+  container.style.gap = "8px";
   container.style.alignItems = "flex-end";
+  container.style.marginTop = "10px";
+  container.style.padding = "10px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "8px";
+  container.style.border = "1px solid #e0e0e0";
 
   const input = document.createElement("input");
   input.type = "text";
@@ -707,13 +605,9 @@ registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
     input.classList.add("solved-input");
   }
 
-  // Hilfsfunktion: Bruch in Dezimalzahl umwandeln
   function parseFraction(value) {
     if (typeof value !== 'string') return value;
-    
     const trimmed = value.trim();
-    
-    // Prüfen ob es ein Bruch ist (enthält /)
     if (trimmed.includes('/')) {
       const parts = trimmed.split('/');
       if (parts.length === 2) {
@@ -724,16 +618,12 @@ registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
         }
       }
     }
-    
-    // Kein Bruch, normale Zahl
     return parseFloat(trimmed.replace(",", "."));
   }
 
-  // Hilfsfunktion: Wert in standardisierte Form für Vergleich
   function normalizeValue(value) {
     if (typeof value === 'number') return value;
     if (typeof value === 'string') {
-      // Bruch parsen
       if (value.includes('/')) {
         const parts = value.split('/');
         if (parts.length === 2) {
@@ -744,22 +634,47 @@ registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
           }
         }
       }
-      // Dezimalzahl mit Komma
       return parseFloat(value.replace(",", "."));
     }
     return NaN;
   }
 
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "12px";
+  feedbackDiv.style.textAlign = "center";
+  feedbackDiv.style.padding = "6px";
+  feedbackDiv.style.borderRadius = "6px";
+  feedbackDiv.style.marginTop = "5px";
+
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Prüfen";
+  checkButton.style.padding = "8px 20px";
+  checkButton.style.fontSize = "13px";
+  checkButton.style.fontWeight = "bold";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "20px";
+
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+  }
+
   const validateInput = () => {
-    if (input.disabled) return;
+    if (isSolved || input.disabled) return;
 
     const rawValue = input.value.trim();
     if (rawValue === "") {
+      feedbackDiv.innerHTML = "⚠️ Bitte eine Antwort eingeben";
+      feedbackDiv.style.background = "#fff3e0";
+      feedbackDiv.style.color = "#ff9800";
       input.classList.remove("correct", "wrong");
       return;
     }
 
-    // Erwartete Antworten (können Zahlen oder Brüche als Strings sein)
     let expectedAnswers = [];
     if (Array.isArray(task.answer)) {
       expectedAnswers = [...task.answer];
@@ -767,10 +682,8 @@ registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
       expectedAnswers = [task.answer];
     }
     
-    // Normalisiere erwartete Antworten (wandle Brüche in Dezimalzahlen um)
     const normalizedExpected = expectedAnswers.map(ans => normalizeValue(ans)).sort((a, b) => a - b);
     
-    // Benutzerantwort parsen
     let userAnswers = [];
     const parts = rawValue.split(",");
     for (const part of parts) {
@@ -802,23 +715,45 @@ registerInput("scalar", ({ task, onCorrect, initialValue, isSolved }) => {
       input.classList.add("correct");
       input.classList.remove("wrong");
       input.disabled = true;
-      
-      // Speichere die originale Eingabe (nicht die umgewandelte)
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
+      feedbackDiv.innerHTML = "✅ Richtig! 🎉";
+      feedbackDiv.style.background = "#e8f5e9";
+      feedbackDiv.style.color = "#2e7d32";
       onCorrect(rawValue);
     } else {
       input.classList.add("wrong");
       input.classList.remove("correct");
+      feedbackDiv.innerHTML = "❌ Falsch! Versuche es noch einmal.";
+      feedbackDiv.style.background = "#ffebee";
+      feedbackDiv.style.color = "#c62828";
+      
+      setTimeout(() => {
+        if (!isSolved && !input.disabled) {
+          input.classList.remove("wrong");
+          feedbackDiv.innerHTML = "";
+          feedbackDiv.style.background = "";
+        }
+      }, 2000);
     }
   };
 
-  input.addEventListener("input", validateInput);
-  input.addEventListener("change", validateInput);
+  checkButton.onclick = validateInput;
+  input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      validateInput();
+    }
+  });
 
   container.appendChild(input);
+  container.appendChild(checkButton);
+  container.appendChild(feedbackDiv);
+  
   return container;
 });
 // --------------------
-// VECTOR - Mit Prüf-Button (Anzeige wie viele falsch sind)
+// VECTOR - Mit Prüf-Button
 // --------------------
 registerInput("vector", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
@@ -886,10 +821,9 @@ registerInput("vector", ({ task, onCorrect, initialValue, isSolved }) => {
 
   const bottomContainer = document.createElement("div");
   bottomContainer.style.display = "flex";
-  bottomContainer.style.justifyContent = "space-between";
+  bottomContainer.style.justifyContent = "flex-end";
   bottomContainer.style.alignItems = "center";
   bottomContainer.style.marginTop = "8px";
-  bottomContainer.style.gap = "10px";
 
   const feedbackDiv = document.createElement("div");
   feedbackDiv.style.fontSize = "11px";
@@ -906,10 +840,12 @@ registerInput("vector", ({ task, onCorrect, initialValue, isSolved }) => {
   checkButton.style.color = "white";
   checkButton.style.border = "none";
   checkButton.style.borderRadius = "4px";
-  checkButton.style.transition = "all 0.2s";
 
-  checkButton.onmouseenter = () => checkButton.style.transform = "scale(1.02)";
-  checkButton.onmouseleave = () => checkButton.style.transform = "scale(1)";
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+  }
 
   bottomContainer.appendChild(feedbackDiv);
   bottomContainer.appendChild(checkButton);
@@ -972,11 +908,6 @@ registerInput("vector", ({ task, onCorrect, initialValue, isSolved }) => {
           inputs.forEach(input => {
             input.classList.remove("wrong");
           });
-          setTimeout(() => {
-            if (!isSolved && feedbackDiv.innerHTML !== "✅ Richtig!") {
-              feedbackDiv.innerHTML = "";
-            }
-          }, 1000);
         }
       }, 1500);
     }
@@ -996,7 +927,7 @@ registerInput("vector", ({ task, onCorrect, initialValue, isSolved }) => {
 });
 
 // --------------------
-// VECTOR_CHECK - Mit Checkbox für "nicht möglich" und Prüfen-Button
+// VECTOR_CHECK - Mit Checkbox für "nicht möglich"
 // --------------------
 registerInput("vector_check", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
@@ -1055,10 +986,11 @@ registerInput("vector_check", ({ task, onCorrect, initialValue, isSolved }) => {
   checkboxContainer.appendChild(impossibleCheckbox);
   checkboxContainer.appendChild(checkboxLabel);
 
-  const buttonContainer = document.createElement("div");
-  buttonContainer.style.display = "flex";
-  buttonContainer.style.justifyContent = "flex-end";
-  buttonContainer.style.marginTop = "10px";
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "12px";
+  feedbackDiv.style.marginTop = "5px";
+  feedbackDiv.style.textAlign = "right";
+  feedbackDiv.style.minHeight = "30px";
 
   const checkButton = document.createElement("button");
   checkButton.textContent = "✓ Antwort prüfen";
@@ -1069,16 +1001,6 @@ registerInput("vector_check", ({ task, onCorrect, initialValue, isSolved }) => {
   checkButton.style.color = "white";
   checkButton.style.border = "none";
   checkButton.style.borderRadius = "5px";
-  checkButton.style.transition = "all 0.2s";
-
-  checkButton.onmouseenter = () => checkButton.style.transform = "scale(1.05)";
-  checkButton.onmouseleave = () => checkButton.style.transform = "scale(1)";
-
-  const feedbackDiv = document.createElement("div");
-  feedbackDiv.style.fontSize = "12px";
-  feedbackDiv.style.marginTop = "5px";
-  feedbackDiv.style.textAlign = "right";
-  feedbackDiv.style.minHeight = "30px";
 
   let initialValues = [];
   if (initialValue && Array.isArray(initialValue)) {
@@ -1136,9 +1058,15 @@ registerInput("vector_check", ({ task, onCorrect, initialValue, isSolved }) => {
     container.appendChild(inputsContainer);
   }
   
-  container.appendChild(buttonContainer);
-  buttonContainer.appendChild(checkButton);
+  container.appendChild(checkButton);
   container.appendChild(feedbackDiv);
+
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+    impossibleCheckbox.disabled = true;
+  }
 
   const validate = () => {
     if (isSolved) return;
@@ -1160,6 +1088,9 @@ registerInput("vector_check", ({ task, onCorrect, initialValue, isSolved }) => {
             if (i.type !== 'hidden') i.disabled = true;
           });
         }
+        checkButton.disabled = true;
+        checkButton.style.background = "#4caf50";
+        checkButton.textContent = "✓ Gelöst";
         onCorrect(["nicht", "möglich"]);
       } else {
         feedbackDiv.innerHTML = "❌ Falsch! Überlegen Sie: Sind die Dimensionen der Vektoren kompatibel?";
@@ -1228,6 +1159,9 @@ registerInput("vector_check", ({ task, onCorrect, initialValue, isSolved }) => {
         if (i.type !== 'hidden') i.disabled = true;
       });
       impossibleCheckbox.disabled = true;
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
       onCorrect(values);
     } else {
       let wrongFields = [];
@@ -1247,7 +1181,7 @@ registerInput("vector_check", ({ task, onCorrect, initialValue, isSolved }) => {
       });
       
       if (wrongFields.length > 0) {
-        feedbackDiv.innerHTML = `❌ Falsch: ${wrongFields.join(", ")} sind nicht korrekt. Versuchen Sie es nochmal!`;
+        feedbackDiv.innerHTML = `❌ Falsch: ${wrongFields.join(", ")} sind nicht korrekt.`;
         feedbackDiv.style.color = "#c62828";
       }
     }
@@ -1358,10 +1292,9 @@ registerInput("analysis_form", ({ task, onCorrect, initialValue, isSolved }) => 
 
   const bottomContainer = document.createElement("div");
   bottomContainer.style.display = "flex";
-  bottomContainer.style.justifyContent = "space-between";
+  bottomContainer.style.justifyContent = "flex-end";
   bottomContainer.style.alignItems = "center";
   bottomContainer.style.marginTop = "15px";
-  bottomContainer.style.gap = "10px";
 
   const feedbackDiv = document.createElement("div");
   feedbackDiv.style.fontSize = "12px";
@@ -1378,7 +1311,12 @@ registerInput("analysis_form", ({ task, onCorrect, initialValue, isSolved }) => 
   checkButton.style.color = "white";
   checkButton.style.border = "none";
   checkButton.style.borderRadius = "5px";
-  checkButton.style.transition = "all 0.2s";
+
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+  }
 
   bottomContainer.appendChild(feedbackDiv);
   bottomContainer.appendChild(checkButton);
@@ -1484,11 +1422,6 @@ registerInput("analysis_form", ({ task, onCorrect, initialValue, isSolved }) => 
             const input = inputs[field.id];
             input.classList.remove("wrong");
           }
-          setTimeout(() => {
-            if (!isSolved && feedbackDiv.innerHTML !== "✅ Richtig! Alle Antworten sind korrekt!") {
-              feedbackDiv.innerHTML = "";
-            }
-          }, 1000);
         }
       }, 2000);
     }
@@ -1618,10 +1551,9 @@ registerInput("triangle_properties", ({ task, onCorrect, initialValue, isSolved 
 
   const bottomContainer = document.createElement("div");
   bottomContainer.style.display = "flex";
-  bottomContainer.style.justifyContent = "space-between";
+  bottomContainer.style.justifyContent = "flex-end";
   bottomContainer.style.alignItems = "center";
   bottomContainer.style.marginTop = "8px";
-  bottomContainer.style.gap = "10px";
 
   const feedbackDiv = document.createElement("div");
   feedbackDiv.style.fontSize = "11px";
@@ -1638,6 +1570,12 @@ registerInput("triangle_properties", ({ task, onCorrect, initialValue, isSolved 
   checkButton.style.color = "white";
   checkButton.style.border = "none";
   checkButton.style.borderRadius = "4px";
+
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+  }
 
   bottomContainer.appendChild(feedbackDiv);
   bottomContainer.appendChild(checkButton);
@@ -1680,6 +1618,9 @@ registerInput("triangle_properties", ({ task, onCorrect, initialValue, isSolved 
         input.disabled = true;
       });
       checkboxes.forEach(checkbox => checkbox.disabled = true);
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
       
       const result = {
         lengths: lengthValues,
@@ -1806,129 +1747,317 @@ registerInput("note", ({ task, onCorrect, initialValue, isSolved }) => {
 });
 
 // --------------------
-// ROOTS & INTERCEPT (Nullstellen und y-Achsenabschnitt)
+// ROOTS & INTERCEPT (Nullstellen und y-Achsenabschnitt) - MIT PRÜFBUTTON
 // --------------------
 registerInput("roots_intercept", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
   container.className = "roots-input";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "12px";
+  container.style.marginTop = "10px";
+  container.style.padding = "15px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "8px";
+  container.style.border = "1px solid #e0e0e0";
   
   const nullstellenDiv = document.createElement("div");
-  nullstellenDiv.style.marginBottom = "10px";
+  nullstellenDiv.style.display = "flex";
+  nullstellenDiv.style.alignItems = "center";
+  nullstellenDiv.style.gap = "10px";
+  nullstellenDiv.style.justifyContent = "flex-end";
   nullstellenDiv.innerHTML = "<strong>Nullstellen:</strong> ";
   
   const nullstellenInput = document.createElement("input");
   nullstellenInput.type = "text";
   nullstellenInput.placeholder = "z.B. -12,-1,4 oder 'keine'";
   nullstellenInput.style.width = "200px";
-  nullstellenInput.style.marginLeft = "10px";
+  nullstellenInput.style.padding = "8px";
+  nullstellenInput.style.borderRadius = "4px";
+  nullstellenInput.style.border = "1px solid #ccc";
   
   const yachsenDiv = document.createElement("div");
+  yachsenDiv.style.display = "flex";
+  yachsenDiv.style.alignItems = "center";
+  yachsenDiv.style.gap = "10px";
+  yachsenDiv.style.justifyContent = "flex-end";
   yachsenDiv.innerHTML = "<strong>y-Achsenabschnitt:</strong> ";
   
   const yachsenInput = document.createElement("input");
-  yachsenInput.type = "text";
+  yachsenInput.type = "number";
   yachsenInput.placeholder = "z.B. 5";
   yachsenInput.style.width = "100px";
-  yachsenInput.style.marginLeft = "10px";
+  yachsenInput.style.padding = "8px";
+  yachsenInput.style.borderRadius = "4px";
+  yachsenInput.style.border = "1px solid #ccc";
   
   nullstellenDiv.appendChild(nullstellenInput);
   yachsenDiv.appendChild(yachsenInput);
   container.appendChild(nullstellenDiv);
   container.appendChild(yachsenDiv);
   
-  if (isSolved && initialValue) {
-    if (initialValue.nullstellen) {
-      nullstellenInput.value = Array.isArray(initialValue.nullstellen) 
-        ? initialValue.nullstellen.join(",") 
-        : initialValue.nullstellen;
-    }
-    if (initialValue.yachsenabschnitt !== undefined) {
-      yachsenInput.value = initialValue.yachsenabschnitt;
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "12px";
+  feedbackDiv.style.padding = "6px";
+  feedbackDiv.style.borderRadius = "6px";
+  feedbackDiv.style.marginTop = "5px";
+  feedbackDiv.style.textAlign = "center";
+  
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Prüfen";
+  checkButton.style.padding = "8px 20px";
+  checkButton.style.fontSize = "14px";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "20px";
+  checkButton.style.marginTop = "10px";
+  checkButton.style.alignSelf = "flex-end";
+  
+  if (isSolved) {
+    if (initialValue) {
+      if (initialValue.nullstellen) {
+        nullstellenInput.value = Array.isArray(initialValue.nullstellen) 
+          ? initialValue.nullstellen.join(",") 
+          : initialValue.nullstellen;
+      }
+      if (initialValue.yachsenabschnitt !== undefined) {
+        yachsenInput.value = initialValue.yachsenabschnitt;
+      }
     }
     nullstellenInput.disabled = true;
     yachsenInput.disabled = true;
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
   }
   
   const validate = () => {
-    if (nullstellenInput.disabled) return;
+    if (isSolved || nullstellenInput.disabled) return;
     
-    let nullstellen = nullstellenInput.value.trim();
+    let nullstellenRaw = nullstellenInput.value.trim();
     let yachsenabschnitt = parseFloat(yachsenInput.value);
     
     let nullstellenArray = [];
-    if (nullstellen.toLowerCase() === "keine") {
+    if (nullstellenRaw.toLowerCase() === "keine" || nullstellenRaw === "") {
       nullstellenArray = [];
     } else {
-      nullstellenArray = nullstellen.split(",").map(n => parseFloat(n.trim())).filter(n => !isNaN(n));
+      nullstellenArray = nullstellenRaw.split(",").map(n => parseFloat(n.trim())).filter(n => !isNaN(n));
     }
+    nullstellenArray.sort((a, b) => a - b);
     
     const expectedNull = task.answer.nullstellen;
     const expectedY = task.answer.yachsenabschnitt;
     
-    const nullstellenOk = JSON.stringify(nullstellenArray.sort()) === JSON.stringify(expectedNull.sort());
+    const expectedNullSorted = [...expectedNull].sort((a, b) => a - b);
+    
+    const nullstellenOk = nullstellenArray.length === expectedNullSorted.length && 
+                          nullstellenArray.every((v, i) => Math.abs(v - expectedNullSorted[i]) < 0.01);
     const yachsenOk = !isNaN(yachsenabschnitt) && Math.abs(yachsenabschnitt - expectedY) < 0.01;
     
+    if (!nullstellenRaw && isNaN(yachsenabschnitt)) {
+      feedbackDiv.innerHTML = "⚠️ Bitte beide Felder ausfüllen";
+      feedbackDiv.style.background = "#fff3e0";
+      feedbackDiv.style.color = "#ff9800";
+      return;
+    }
+    
     if (nullstellenOk && yachsenOk) {
+      nullstellenInput.classList.add("correct");
+      yachsenInput.classList.add("correct");
+      nullstellenInput.classList.remove("wrong");
+      yachsenInput.classList.remove("wrong");
+      nullstellenInput.disabled = true;
+      yachsenInput.disabled = true;
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
+      feedbackDiv.innerHTML = "✅ Richtig! 🎉";
+      feedbackDiv.style.background = "#e8f5e9";
+      feedbackDiv.style.color = "#2e7d32";
       onCorrect({ nullstellen: nullstellenArray, yachsenabschnitt: yachsenabschnitt });
+    } else {
+      if (!nullstellenOk) nullstellenInput.classList.add("wrong");
+      else nullstellenInput.classList.remove("wrong");
+      if (!yachsenOk) yachsenInput.classList.add("wrong");
+      else yachsenInput.classList.remove("wrong");
+      feedbackDiv.innerHTML = "❌ Falsch! Versuche es noch einmal.";
+      feedbackDiv.style.background = "#ffebee";
+      feedbackDiv.style.color = "#c62828";
+      
+      setTimeout(() => {
+        if (!isSolved) {
+          nullstellenInput.classList.remove("wrong");
+          yachsenInput.classList.remove("wrong");
+          feedbackDiv.innerHTML = "";
+        }
+      }, 2000);
     }
   };
   
-  nullstellenInput.addEventListener("input", validate);
-  yachsenInput.addEventListener("input", validate);
+  checkButton.onclick = validate;
+  nullstellenInput.addEventListener("keypress", (e) => { if (e.key === "Enter") validate(); });
+  yachsenInput.addEventListener("keypress", (e) => { if (e.key === "Enter") validate(); });
+  
+  container.appendChild(checkButton);
+  container.appendChild(feedbackDiv);
   
   return container;
 });
 
 // --------------------
-// ROOTS (nur Nullstellen)
+// ROOTS (nur Nullstellen) - MIT PRÜFBUTTON
 // --------------------
 registerInput("roots", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "8px";
+  container.style.marginTop = "10px";
+  container.style.padding = "10px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "8px";
+  container.style.border = "1px solid #e0e0e0";
   
   const input = document.createElement("input");
   input.type = "text";
   input.placeholder = "z.B. -1,0,2";
   input.style.width = "100%";
+  input.style.padding = "8px";
+  input.style.borderRadius = "4px";
+  input.style.border = "1px solid #ccc";
+  
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "12px";
+  feedbackDiv.style.padding = "6px";
+  feedbackDiv.style.borderRadius = "6px";
+  feedbackDiv.style.textAlign = "center";
+  
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Prüfen";
+  checkButton.style.padding = "6px 18px";
+  checkButton.style.fontSize = "13px";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "20px";
+  checkButton.style.alignSelf = "flex-end";
   
   if (isSolved && initialValue) {
     input.value = Array.isArray(initialValue) ? initialValue.join(", ") : initialValue;
     input.disabled = true;
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
   }
   
   const validate = () => {
-    if (input.disabled) return;
+    if (isSolved || input.disabled) return;
     
-    const values = input.value.split(",").map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    const rawValue = input.value.trim();
+    if (rawValue === "") {
+      feedbackDiv.innerHTML = "⚠️ Bitte Nullstellen eingeben";
+      feedbackDiv.style.background = "#fff3e0";
+      feedbackDiv.style.color = "#ff9800";
+      return;
+    }
+    
+    const values = rawValue.split(",").map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+    values.sort((a, b) => a - b);
     const expected = task.answer.nullstellen;
+    const expectedSorted = [...expected].sort((a, b) => a - b);
     
-    if (values.length === expected.length && values.every((v, i) => v === expected[i])) {
+    const isCorrect = values.length === expectedSorted.length && 
+                      values.every((v, i) => Math.abs(v - expectedSorted[i]) < 0.01);
+    
+    if (isCorrect) {
+      input.classList.add("correct");
+      input.classList.remove("wrong");
+      input.disabled = true;
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
+      feedbackDiv.innerHTML = "✅ Richtig! 🎉";
+      feedbackDiv.style.background = "#e8f5e9";
+      feedbackDiv.style.color = "#2e7d32";
       onCorrect(values);
+    } else {
+      input.classList.add("wrong");
+      input.classList.remove("correct");
+      feedbackDiv.innerHTML = "❌ Falsch! Versuche es noch einmal.";
+      feedbackDiv.style.background = "#ffebee";
+      feedbackDiv.style.color = "#c62828";
+      
+      setTimeout(() => {
+        if (!isSolved) {
+          input.classList.remove("wrong");
+          feedbackDiv.innerHTML = "";
+        }
+      }, 2000);
     }
   };
   
-  input.addEventListener("input", validate);
+  checkButton.onclick = validate;
+  input.addEventListener("keypress", (e) => { if (e.key === "Enter") validate(); });
+  
   container.appendChild(input);
+  container.appendChild(checkButton);
+  container.appendChild(feedbackDiv);
   
   return container;
 });
 
 // --------------------
-// FUNCTION (für Ableitungen)
+// FUNCTION (für Ableitungen) - MIT PRÜFBUTTON
 // --------------------
 registerInput("function", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "8px";
+  container.style.marginTop = "10px";
+  container.style.padding = "10px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "8px";
+  container.style.border = "1px solid #e0e0e0";
   
   const input = document.createElement("input");
   input.type = "text";
   input.placeholder = "z.B. 3x^2+2x";
   input.style.width = "100%";
+  input.style.padding = "8px";
+  input.style.borderRadius = "4px";
+  input.style.border = "1px solid #ccc";
+  
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "12px";
+  feedbackDiv.style.padding = "6px";
+  feedbackDiv.style.borderRadius = "6px";
+  feedbackDiv.style.textAlign = "center";
+  
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Prüfen";
+  checkButton.style.padding = "6px 18px";
+  checkButton.style.fontSize = "13px";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "20px";
+  checkButton.style.alignSelf = "flex-end";
   
   if (isSolved && initialValue) {
     input.value = initialValue;
     input.disabled = true;
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
   }
   
   const normalizeFunction = (func) => {
+    if (!func) return "";
     return func
       .toLowerCase()
       .replace(/\s/g, '')
@@ -1937,31 +2066,67 @@ registerInput("function", ({ task, onCorrect, initialValue, isSolved }) => {
       .replace(/\^/g, '^')
       .replace(/[*]/g, '')
       .replace(/²/g, '^2')
-      .replace(/³/g, '^3');
+      .replace(/³/g, '^3')
+      .replace(/½/g, '0.5')
+      .replace(/¼/g, '0.25');
   };
   
   const validate = () => {
-    if (input.disabled) return;
+    if (isSolved || input.disabled) return;
     
-    const userFunc = normalizeFunction(input.value);
+    const rawValue = input.value.trim();
+    if (rawValue === "") {
+      feedbackDiv.innerHTML = "⚠️ Bitte eine Funktion eingeben";
+      feedbackDiv.style.background = "#fff3e0";
+      feedbackDiv.style.color = "#ff9800";
+      return;
+    }
+    
+    const userFunc = normalizeFunction(rawValue);
     const expected = normalizeFunction(task.answer.loesung);
     const alternatives = (task.answer.alternativen || []).map(normalizeFunction);
     
     const isCorrect = userFunc === expected || alternatives.includes(userFunc);
     
     if (isCorrect) {
-      onCorrect(input.value);
+      input.classList.add("correct");
+      input.classList.remove("wrong");
+      input.disabled = true;
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
+      feedbackDiv.innerHTML = "✅ Richtig! 🎉";
+      feedbackDiv.style.background = "#e8f5e9";
+      feedbackDiv.style.color = "#2e7d32";
+      onCorrect(rawValue);
+    } else {
+      input.classList.add("wrong");
+      input.classList.remove("correct");
+      feedbackDiv.innerHTML = "❌ Falsch! Versuche es noch einmal.";
+      feedbackDiv.style.background = "#ffebee";
+      feedbackDiv.style.color = "#c62828";
+      
+      setTimeout(() => {
+        if (!isSolved) {
+          input.classList.remove("wrong");
+          feedbackDiv.innerHTML = "";
+        }
+      }, 2000);
     }
   };
   
-  input.addEventListener("input", validate);
+  checkButton.onclick = validate;
+  input.addEventListener("keypress", (e) => { if (e.key === "Enter") validate(); });
+  
   container.appendChild(input);
+  container.appendChild(checkButton);
+  container.appendChild(feedbackDiv);
   
   return container;
 });
 
 // --------------------
-// CODE - Für Lehrer-Codes (mit Bestätigungsknopf)
+// CODE - Für Lehrer-Codes
 // --------------------
 registerInput("code", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
@@ -1995,10 +2160,6 @@ registerInput("code", ({ task, onCorrect, initialValue, isSolved }) => {
   verifyBtn.style.color = "white";
   verifyBtn.style.border = "none";
   verifyBtn.style.borderRadius = "5px";
-  verifyBtn.style.transition = "all 0.2s";
-
-  verifyBtn.onmouseenter = () => verifyBtn.style.transform = "scale(1.05)";
-  verifyBtn.onmouseleave = () => verifyBtn.style.transform = "scale(1)";
 
   const messageDiv = document.createElement("div");
   messageDiv.style.fontSize = "12px";
@@ -2031,12 +2192,22 @@ registerInput("code", ({ task, onCorrect, initialValue, isSolved }) => {
       messageDiv.style.color = "#2e7d32";
       verifyBtn.style.background = "#4caf50";
       verifyBtn.textContent = "✓ Freigeschaltet";
+      input.disabled = true;
+      verifyBtn.disabled = true;
       onCorrect(userCode);
     } else if (userCode.length > 0) {
       input.classList.add("wrong");
       input.classList.remove("correct");
       messageDiv.innerHTML = "❌ Falscher Code. Bitte versuchen Sie es erneut!";
       messageDiv.style.color = "#c62828";
+      
+      setTimeout(() => {
+        if (!isSolved) {
+          input.classList.remove("wrong");
+          messageDiv.innerHTML = task.answer.message || "✏️ Bitte geben Sie den Code von Ihrer Lehrkraft ein.";
+          messageDiv.style.color = "#666";
+        }
+      }, 2000);
     } else {
       input.classList.remove("correct", "wrong");
       messageDiv.innerHTML = task.answer.message || "✏️ Bitte geben Sie den Code von Ihrer Lehrkraft ein.";
@@ -2060,7 +2231,7 @@ registerInput("code", ({ task, onCorrect, initialValue, isSolved }) => {
 });
 
 // --------------------
-// POINT - Mit Prüf-Button (Anzeige wie viele falsch sind)
+// POINT - Mit Prüf-Button
 // --------------------
 registerInput("point", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
@@ -2136,7 +2307,7 @@ registerInput("point", ({ task, onCorrect, initialValue, isSolved }) => {
 
   const bottomContainer = document.createElement("div");
   bottomContainer.style.display = "flex";
-  bottomContainer.style.justifyContent = "space-between";
+  bottomContainer.style.justifyContent = "flex-end";
   bottomContainer.style.alignItems = "center";
   bottomContainer.style.marginTop = "10px";
   bottomContainer.style.gap = "10px";
@@ -2157,6 +2328,12 @@ registerInput("point", ({ task, onCorrect, initialValue, isSolved }) => {
   checkButton.style.color = "white";
   checkButton.style.border = "none";
   checkButton.style.borderRadius = "4px";
+
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+  }
 
   bottomContainer.appendChild(feedbackDiv);
   bottomContainer.appendChild(checkButton);
@@ -2207,11 +2384,6 @@ registerInput("point", ({ task, onCorrect, initialValue, isSolved }) => {
       setTimeout(() => {
         if (!isSolved) {
           inputs.forEach(input => input.classList.remove("wrong"));
-          setTimeout(() => {
-            if (!isSolved && feedbackDiv.innerHTML !== "✅ Richtig!") {
-              feedbackDiv.innerHTML = "";
-            }
-          }, 1000);
         }
       }, 1500);
     }
@@ -2230,8 +2402,7 @@ registerInput("point", ({ task, onCorrect, initialValue, isSolved }) => {
   return container;
 });
 // --------------------
-// SET - Für Ergebnismengen (Mengenlehre)
-// Erkennt: {1,2,3}, 1,2,3, {1;2;3}, leere Menge, ∅, { }
+// SET - Für Ergebnismengen (Mengenlehre) - MIT PRÜFBUTTON
 // --------------------
 registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
@@ -2239,16 +2410,23 @@ registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
   container.style.flexDirection = "column";
   container.style.gap = "8px";
   container.style.alignItems = "flex-end";
+  container.style.marginTop = "10px";
+  container.style.padding = "10px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "8px";
+  container.style.border = "1px solid #e0e0e0";
   container.style.width = "100%";
 
   const input = document.createElement("input");
   input.type = "text";
   input.placeholder = task.placeholder || "z.B. {1,2,3} oder 1,2,3 oder leere Menge";
-  input.style.width = "250px";
+  input.style.width = "100%";
   input.style.padding = "10px";
   input.style.fontSize = "16px";
   input.style.fontFamily = "monospace";
   input.style.textAlign = "left";
+  input.style.borderRadius = "4px";
+  input.style.border = "1px solid #ccc";
 
   if (initialValue) {
     input.value = initialValue;
@@ -2259,13 +2437,36 @@ registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
     input.classList.add("solved-input");
   }
 
-  // Hilfsfunktion: Normalisiere eine Mengen-Eingabe
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "12px";
+  feedbackDiv.style.padding = "6px";
+  feedbackDiv.style.borderRadius = "6px";
+  feedbackDiv.style.marginTop = "5px";
+  feedbackDiv.style.textAlign = "center";
+
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Prüfen";
+  checkButton.style.padding = "8px 20px";
+  checkButton.style.fontSize = "13px";
+  checkButton.style.fontWeight = "bold";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "20px";
+  checkButton.style.alignSelf = "flex-end";
+
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+  }
+
   function normalizeSet(inputStr) {
     if (!inputStr || inputStr.trim() === "") return null;
     
     let cleaned = inputStr.trim();
     
-    // Leere Menge erkennen
     if (cleaned === "∅" || 
         cleaned === "{}" || 
         cleaned === "{ }" || 
@@ -2273,20 +2474,17 @@ registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
         cleaned === "leer" ||
         cleaned === "keine" ||
         cleaned === "nichts") {
-      return []; // Leere Menge
+      return [];
     }
     
-    // Entferne geschweifte Klammern, wenn vorhanden
     if (cleaned.startsWith("{") && cleaned.endsWith("}")) {
       cleaned = cleaned.slice(1, -1).trim();
     }
     
-    // Leere Menge nach Entfernen der Klammern
     if (cleaned === "") {
       return [];
     }
     
-    // Teile nach Komma oder Semikolon
     let parts;
     if (cleaned.includes(",")) {
       parts = cleaned.split(",");
@@ -2296,13 +2494,11 @@ registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
       parts = [cleaned];
     }
     
-    // Konvertiere jedes Element zu einer Zahl
     const numbers = [];
     for (const part of parts) {
       const trimmed = part.trim();
       if (trimmed === "") continue;
       
-      // Bruch erkennen (z.B. 1/2)
       let num;
       if (trimmed.includes("/")) {
         const fractionParts = trimmed.split("/");
@@ -2314,7 +2510,6 @@ registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
           }
         }
       } else {
-        // Normale Zahl (mit Komma als Dezimaltrenner)
         num = parseFloat(trimmed.replace(",", "."));
       }
       
@@ -2323,12 +2518,10 @@ registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
       }
     }
     
-    // Sortiere für konsistenten Vergleich
     numbers.sort((a, b) => a - b);
     return numbers;
   }
 
-  // Hilfsfunktion: Vergleiche zwei Mengen
   function setsAreEqual(set1, set2, tolerance = 0.001) {
     if (set1 === null || set2 === null) return false;
     if (set1.length !== set2.length) return false;
@@ -2341,22 +2534,18 @@ registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
     return true;
   }
 
-  // Formatierte Anzeige der Menge (für Feedback)
-  function formatSet(set) {
-    if (!set || set.length === 0) return "∅";
-    return "{ " + set.join(", ") + " }";
-  }
-
   const validateInput = () => {
-    if (input.disabled) return;
+    if (isSolved || input.disabled) return;
 
     const rawValue = input.value.trim();
     if (rawValue === "") {
+      feedbackDiv.innerHTML = "⚠️ Bitte eine Menge eingeben";
+      feedbackDiv.style.background = "#fff3e0";
+      feedbackDiv.style.color = "#ff9800";
       input.classList.remove("correct", "wrong");
       return;
     }
 
-    // Erwartete Antwort normalisieren
     let expectedSet;
     if (Array.isArray(task.answer)) {
       expectedSet = [...task.answer].sort((a, b) => a - b);
@@ -2366,10 +2555,12 @@ registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
       expectedSet = normalizeSet(String(task.answer));
     }
     
-    // Benutzerantwort normalisieren
     const userSet = normalizeSet(rawValue);
     
     if (userSet === null) {
+      feedbackDiv.innerHTML = "❌ Ungültiges Format";
+      feedbackDiv.style.background = "#ffebee";
+      feedbackDiv.style.color = "#c62828";
       input.classList.add("wrong");
       input.classList.remove("correct");
       return;
@@ -2378,24 +2569,35 @@ registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
     const tolerance = task.tolerance || 0.001;
     const isCorrect = setsAreEqual(userSet, expectedSet, tolerance);
     
-    // Zusätzlich: Prüfen ob die Reihenfolge der Elemente egal ist
-    // (bereits durch sortieren erledigt)
-    
     if (isCorrect) {
       input.classList.add("correct");
       input.classList.remove("wrong");
       input.disabled = true;
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
+      feedbackDiv.innerHTML = "✅ Richtig! 🎉";
+      feedbackDiv.style.background = "#e8f5e9";
+      feedbackDiv.style.color = "#2e7d32";
       onCorrect(rawValue);
     } else {
       input.classList.add("wrong");
       input.classList.remove("correct");
+      feedbackDiv.innerHTML = "❌ Falsch! Versuche es noch einmal.";
+      feedbackDiv.style.background = "#ffebee";
+      feedbackDiv.style.color = "#c62828";
+      
+      setTimeout(() => {
+        if (!isSolved && !input.disabled) {
+          input.classList.remove("wrong");
+          feedbackDiv.innerHTML = "";
+          feedbackDiv.style.background = "";
+        }
+      }, 2000);
     }
   };
 
-  input.addEventListener("input", validateInput);
-  input.addEventListener("change", validateInput);
-  
-  // Enter-Taste bestätigt die Eingabe
+  checkButton.onclick = validateInput;
   input.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -2404,12 +2606,13 @@ registerInput("set", ({ task, onCorrect, initialValue, isSolved }) => {
   });
 
   container.appendChild(input);
+  container.appendChild(checkButton);
+  container.appendChild(feedbackDiv);
   
   return container;
 });
 // --------------------
 // PROBABILITY - Wahrscheinlichkeit mit Ergebnismenge
-// Flexible Felder: set, fraction, decimal, percent
 // --------------------
 registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
   const container = document.createElement("div");
@@ -2423,15 +2626,10 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
   container.style.borderRadius = "12px";
   container.style.border = "1px solid #e0e0e0";
 
-  // Konfiguration aus der task
   const fields = task.fields || ["set", "fraction", "decimal", "percent"];
   const expected = task.answer;
-  
-  // Speicher für die Eingabefelder
   const inputs = {};
-  const feedbackFields = {};
 
-  // Kopfzeile
   const instruction = document.createElement("div");
   instruction.style.fontSize = "14px";
   instruction.style.fontWeight = "bold";
@@ -2444,7 +2642,6 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
   instruction.innerHTML = task.instruction || "📊 Gib die Ergebnismenge und die Wahrscheinlichkeit in verschiedenen Formen an:";
   container.appendChild(instruction);
 
-  // Hilfsfunktionen
   function parseFraction(value) {
     if (!value || typeof value !== 'string') return NaN;
     const trimmed = value.trim();
@@ -2466,20 +2663,17 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
     
     let cleaned = inputStr.trim();
     
-    // Leere Menge erkennen
     if (cleaned === "∅" || cleaned === "{}" || cleaned === "{ }" || 
         cleaned === "leere Menge" || cleaned === "leer" || cleaned === "keine") {
       return [];
     }
     
-    // Entferne geschweifte Klammern
     if (cleaned.startsWith("{") && cleaned.endsWith("}")) {
       cleaned = cleaned.slice(1, -1).trim();
     }
     
     if (cleaned === "") return [];
     
-    // Teile nach Komma oder Semikolon
     let parts;
     if (cleaned.includes(",")) {
       parts = cleaned.split(",");
@@ -2526,7 +2720,6 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
     return true;
   }
 
-  // Erstelle die Eingabefelder basierend auf den definierten fields
   const formContainer = document.createElement("div");
   formContainer.style.display = "flex";
   formContainer.style.flexDirection = "column";
@@ -2599,22 +2792,18 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
         continue;
     }
 
-    // Label erstellen
     const labelSpan = document.createElement("span");
     labelSpan.innerHTML = `<strong>${label}</strong>`;
     labelSpan.style.minWidth = "130px";
     labelSpan.style.fontSize = "14px";
     
-    // Gespeicherten Wert laden
     if (initialValue && initialValue[field] !== undefined) {
       input.value = initialValue[field];
     }
     
-    // Bei gelöster Aufgabe deaktivieren
     if (isSolved) {
       input.disabled = true;
       input.classList.add("solved-input");
-      // Zeige die erwartete Lösung an
       if (field === "set" && Array.isArray(expectedValue)) {
         const displaySpan = document.createElement("span");
         displaySpan.style.fontSize = "13px";
@@ -2659,13 +2848,6 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
 
   container.appendChild(formContainer);
 
-  // Feedback und Buttons
-  const buttonContainer = document.createElement("div");
-  buttonContainer.style.display = "flex";
-  buttonContainer.style.gap = "10px";
-  buttonContainer.style.justifyContent = "center";
-  buttonContainer.style.marginTop = "15px";
-
   const feedbackDiv = document.createElement("div");
   feedbackDiv.style.fontSize = "13px";
   feedbackDiv.style.textAlign = "center";
@@ -2683,37 +2865,13 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
   checkButton.style.color = "white";
   checkButton.style.border = "none";
   checkButton.style.borderRadius = "25px";
-  checkButton.style.transition = "all 0.2s";
-
-  const resetButton = document.createElement("button");
-  resetButton.textContent = "🔄 Zurücksetzen";
-  resetButton.style.padding = "10px 24px";
-  resetButton.style.fontSize = "14px";
-  resetButton.style.fontWeight = "bold";
-  resetButton.style.cursor = "pointer";
-  resetButton.style.background = "#ff9800";
-  resetButton.style.color = "white";
-  resetButton.style.border = "none";
-  resetButton.style.borderRadius = "25px";
-  resetButton.style.transition = "all 0.2s";
+  checkButton.style.alignSelf = "center";
 
   if (isSolved) {
     checkButton.disabled = true;
     checkButton.style.background = "#4caf50";
     checkButton.textContent = "✓ Gelöst";
-    resetButton.disabled = true;
-    resetButton.style.opacity = "0.5";
   }
-
-  resetButton.onclick = () => {
-    if (isSolved) return;
-    for (const key in inputs) {
-      inputs[key].input.value = "";
-      inputs[key].input.classList.remove("correct", "wrong");
-    }
-    feedbackDiv.innerHTML = "";
-    feedbackDiv.style.background = "";
-  };
 
   checkButton.onclick = () => {
     if (isSolved) return;
@@ -2722,7 +2880,6 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
     const totalFields = Object.keys(inputs).length;
     const results = {};
     
-    // Prüfe jedes Feld
     for (const key in inputs) {
       const { input, expectedValue, field } = inputs[key];
       const userValue = input.value.trim();
@@ -2787,7 +2944,6 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
       feedbackDiv.style.background = "#e8f5e9";
       feedbackDiv.style.color = "#2e7d32";
       
-      // Alle Felder deaktivieren
       for (const key in inputs) {
         inputs[key].input.disabled = true;
       }
@@ -2795,8 +2951,6 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
       checkButton.disabled = true;
       checkButton.style.background = "#4caf50";
       checkButton.textContent = "✓ Gelöst";
-      resetButton.disabled = true;
-      resetButton.style.opacity = "0.5";
       
       onCorrect(results);
       
@@ -2814,7 +2968,6 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
       feedbackDiv.style.background = "#ffebee";
       feedbackDiv.style.color = "#c62828";
       
-      // Nach 2 Sekunden die Fehlermarkierung entfernen
       setTimeout(() => {
         if (!isSolved) {
           for (const key in inputs) {
@@ -2825,32 +2978,70 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
     }
   };
 
-  buttonContainer.appendChild(resetButton);
-  buttonContainer.appendChild(checkButton);
-  container.appendChild(buttonContainer);
+  container.appendChild(checkButton);
   container.appendChild(feedbackDiv);
 
   return container;
 });
 // --------------------
-// TEXT - Für Textantworten
+// TEXT - Für Textantworten - MIT PRÜFBUTTON
 // --------------------
 registerInput("text", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = document.createElement("div");
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "8px";
+  container.style.marginTop = "10px";
+  container.style.padding = "10px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "8px";
+  container.style.border = "1px solid #e0e0e0";
+  
   const input = document.createElement("input");
   input.type = "text";
   input.placeholder = "Antwort eingeben...";
   input.style.width = "100%";
+  input.style.padding = "8px";
+  input.style.borderRadius = "4px";
+  input.style.border = "1px solid #ccc";
+  
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "12px";
+  feedbackDiv.style.padding = "6px";
+  feedbackDiv.style.borderRadius = "6px";
+  feedbackDiv.style.textAlign = "center";
+  
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Prüfen";
+  checkButton.style.padding = "6px 18px";
+  checkButton.style.fontSize = "13px";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "20px";
+  checkButton.style.alignSelf = "flex-end";
   
   if (initialValue) input.value = initialValue;
   if (isSolved) {
     input.disabled = true;
     input.classList.add("solved-input");
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
   }
-
+  
   const validateAndSubmit = () => {
-    if (input.disabled) return;
+    if (isSolved || input.disabled) return;
     
     const userAnswer = input.value.trim().toLowerCase();
+    if (userAnswer === "") {
+      feedbackDiv.innerHTML = "⚠️ Bitte eine Antwort eingeben";
+      feedbackDiv.style.background = "#fff3e0";
+      feedbackDiv.style.color = "#ff9800";
+      return;
+    }
+    
     const expectedAnswer = task.answer.toLowerCase();
     const alternatives = (task.alternatives || []).map(alt => alt.toLowerCase());
     
@@ -2859,15 +3050,40 @@ registerInput("text", ({ task, onCorrect, initialValue, isSolved }) => {
     if (isCorrect) {
       input.classList.add("correct");
       input.classList.remove("wrong");
+      input.disabled = true;
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
+      feedbackDiv.innerHTML = "✅ Richtig! 🎉";
+      feedbackDiv.style.background = "#e8f5e9";
+      feedbackDiv.style.color = "#2e7d32";
       onCorrect(input.value);
-    } else if (input.value !== "") {
+    } else {
       input.classList.add("wrong");
       input.classList.remove("correct");
-    } else {
-      input.classList.remove("correct", "wrong");
+      feedbackDiv.innerHTML = "❌ Falsch! Versuche es noch einmal.";
+      feedbackDiv.style.background = "#ffebee";
+      feedbackDiv.style.color = "#c62828";
+      
+      setTimeout(() => {
+        if (!isSolved) {
+          input.classList.remove("wrong");
+          feedbackDiv.innerHTML = "";
+        }
+      }, 2000);
     }
   };
-
-  input.addEventListener("input", validateAndSubmit);
-  return input;
+  
+  checkButton.onclick = validateAndSubmit;
+  input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      validateAndSubmit();
+    }
+  });
+  
+  container.appendChild(input);
+  container.appendChild(checkButton);
+  container.appendChild(feedbackDiv);
+  
+  return container;
 });
