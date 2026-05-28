@@ -292,73 +292,88 @@ animateFlagsSolved(taskEl, difficulty) {
   let stealMessage = "";
   
   switch(difficulty) {
-    case 1:
-      difficultyText = "Brise";
-      difficultyIcon = "🌊";
-      stealMessage = "🏴‍☠️ Es darf EINE Flagge von einer anderen Gruppen geklaut werden! 🏴‍☠️";
+    case 3:
+      difficultyText = "Sturm";
+      difficultyIcon = "🌪️";
+      stealMessage = "🏴‍☠️ Es dürfen DREI Flaggen von einer anderen Gruppe geklaut werden! 🏴‍☠️";
       break;
     case 2:
       difficultyText = "Wind";
       difficultyIcon = "💨";
-      stealMessage = "🏴‍☠️ Es dürfen ZWEI Flaggen von einer anderen Gruppen geklaut werden! 🏴‍☠️";
+      stealMessage = "🏴‍☠️ Es dürfen ZWEI Flaggen von einer anderen Gruppe geklaut werden! 🏴‍☠️";
       break;
-    case 3:
-      difficultyText = "Sturm";
-      difficultyIcon = "🌪️";
-      stealMessage = "🏴‍☠️ Es dürfen DREI Flaggen von einer anderen Gruppen geklaut werden! 🏴‍☠️";
-      break;
-    default:
+    case 1:
       difficultyText = "Brise";
       difficultyIcon = "🌊";
-      stealMessage = "🏴‍☠️ Es darf EINE Flagge von einer anderen Gruppen geklaut werden! 🏴‍☠️";
+      stealMessage = "🏴‍☠️ Es darf EINE Flagge von einer anderen Gruppe geklaut werden! 🏴‍☠️";
+      break;
+    default:
+      difficultyText = "Keine";
+      difficultyIcon = "❌";
+      stealMessage = "🏴‍☠️ Keine Flaggen erhalten - mehr richtige Antworten benötigt! 🏴‍☠️";
   }
   
-  // Belohnungs-Animation in der Mitte
-  const reward = document.createElement("div");
-  reward.className = "flags-center";
-  reward.style.textAlign = "center";
-  reward.style.marginTop = "15px";
-  reward.style.padding = "15px";
-  reward.style.background = "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)";
-  reward.style.borderRadius = "8px";
-  reward.style.animation = "fadeInUp 0.5s ease-out";
-  
-  // Flaggen für die Schwierigkeit
-  for (let i = 0; i < difficulty; i++) {
-    const flag = document.createElement("span");
-    flag.textContent = "🚩";
-    flag.style.fontSize = "28px";
-    flag.style.display = "inline-block";
-    flag.style.margin = "0 5px";
-    flag.style.animation = `bounce 0.5s ease-out ${i * 0.1}s`;
-    reward.appendChild(flag);
+  // Nur Flaggen anzeigen, wenn mindestens 1 erreicht wurde
+  if (difficulty >= 1) {
+    const reward = document.createElement("div");
+    reward.className = "flags-center";
+    reward.style.textAlign = "center";
+    reward.style.marginTop = "15px";
+    reward.style.padding = "15px";
+    reward.style.background = "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)";
+    reward.style.borderRadius = "8px";
+    reward.style.animation = "fadeInUp 0.5s ease-out";
+    
+    // Flaggen für die erreichte Schwierigkeit
+    for (let i = 0; i < difficulty; i++) {
+      const flag = document.createElement("span");
+      flag.textContent = "🚩";
+      flag.style.fontSize = "28px";
+      flag.style.display = "inline-block";
+      flag.style.margin = "0 5px";
+      flag.style.animation = `bounce 0.5s ease-out ${i * 0.1}s`;
+      reward.appendChild(flag);
+    }
+    
+    const rewardText = document.createElement("div");
+    rewardText.innerHTML = `🎉 Aufgabe gelöst! (${difficultyIcon} ${difficultyText}) 🎉`;
+    rewardText.style.fontSize = "14px";
+    rewardText.style.marginTop = "8px";
+    rewardText.style.marginBottom = "10px";
+    rewardText.style.fontWeight = "bold";
+    rewardText.style.color = "#2e7d32";
+    reward.appendChild(rewardText);
+    
+    const stealText = document.createElement("div");
+    stealText.innerHTML = stealMessage;
+    stealText.style.fontSize = "12px";
+    stealText.style.marginTop = "8px";
+    stealText.style.padding = "8px";
+    stealText.style.background = "#ffebee";
+    stealText.style.borderRadius = "5px";
+    stealText.style.color = "#c62828";
+    stealText.style.fontWeight = "bold";
+    stealText.style.border = "1px solid #ffcdd2";
+    reward.appendChild(stealText);
+    
+    taskEl.appendChild(reward);
+  } else {
+    // Keine Flaggen - andere Nachricht
+    const noFlagsMsg = document.createElement("div");
+    noFlagsMsg.className = "flags-center";
+    noFlagsMsg.style.textAlign = "center";
+    noFlagsMsg.style.marginTop = "15px";
+    noFlagsMsg.style.padding = "15px";
+    noFlagsMsg.style.background = "linear-gradient(135deg, #ffebee15 0%, #ffcdd215 100%)";
+    noFlagsMsg.style.borderRadius = "8px";
+    noFlagsMsg.style.animation = "fadeInUp 0.5s ease-out";
+    noFlagsMsg.innerHTML = `
+      <div style="font-size:20px">❌ Keine Flaggen erhalten! ❌</div>
+      <div style="font-size:12px; margin-top:8px">${stealMessage}</div>
+    `;
+    taskEl.appendChild(noFlagsMsg);
   }
-  
-  const rewardText = document.createElement("div");
-  rewardText.innerHTML = `🎉 Aufgabe gelöst! (${difficultyIcon} ${difficultyText}) 🎉`;
-  rewardText.style.fontSize = "14px";
-  rewardText.style.marginTop = "8px";
-  rewardText.style.marginBottom = "10px";
-  rewardText.style.fontWeight = "bold";
-  rewardText.style.color = "#2e7d32";
-  reward.appendChild(rewardText);
-  
-  // Steal-Nachricht mit angepasster Anzahl
-  const stealText = document.createElement("div");
-  stealText.innerHTML = stealMessage;
-  stealText.style.fontSize = "12px";
-  stealText.style.marginTop = "8px";
-  stealText.style.padding = "8px";
-  stealText.style.background = "#ffebee";
-  stealText.style.borderRadius = "5px";
-  stealText.style.color = "#c62828";
-  stealText.style.fontWeight = "bold";
-  stealText.style.border = "1px solid #ffcdd2";
-  reward.appendChild(stealText);
-  
-  taskEl.appendChild(reward);
 }
-
  markTaskSolved(taskEl, levelIndex, taskIndex, value) {
   taskEl.classList.add("solved");
   
@@ -368,16 +383,38 @@ animateFlagsSolved(taskEl, difficulty) {
     input.classList.add("solved-input");
   });
   
-  // Status aktualisieren (nur "Gelöst" ohne Schwierigkeit)
+  // Status aktualisieren
   const statusEl = taskEl.querySelector(".task-status");
   if (statusEl) {
     statusEl.innerHTML = '✅ Gelöst';
     statusEl.style.color = '#2e7d32';
   }
   
-  // Belohnung anzeigen (Flaggen + Schwierigkeitsgrad)
-  const difficulty = levels[levelIndex].tasks[taskIndex].difficulty || 1;
-  this.animateFlagsSolved(taskEl, difficulty);
+  // ========== NEU: Dynamische Schwierigkeit aus Rückgabewert ==========
+  // Prüfe, ob der zurückgegebene Wert ein Objekt mit difficulty ist
+  let displayDifficulty = levels[levelIndex].tasks[taskIndex].difficulty || 1;
+  
+  if (value && typeof value === 'object') {
+    // Wenn der Rückgabewert eine difficulty-Eigenschaft hat, verwende diese
+    if (value.difficulty !== undefined) {
+      displayDifficulty = value.difficulty;
+    }
+    // Wenn der Rückgabewert eine achievedDifficulty hat
+    else if (value.achievedDifficulty !== undefined) {
+      displayDifficulty = value.achievedDifficulty;
+    }
+    // Wenn der Rückgabewert eine flagCount hat
+    else if (value.flagCount !== undefined) {
+      displayDifficulty = value.flagCount;
+    }
+  }
+  // Wenn der Rückgabewert direkt eine Zahl ist (0-3)
+  else if (typeof value === 'number' && value >= 0 && value <= 3) {
+    displayDifficulty = value;
+  }
+  
+  // Belohnung mit dynamischer Schwierigkeit anzeigen
+  this.animateFlagsSolved(taskEl, displayDifficulty);
   
   // Level-Fortschritt aktualisieren
   this.updateLevelProgress(levelIndex);

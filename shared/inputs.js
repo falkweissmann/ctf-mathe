@@ -2984,6 +2984,2278 @@ registerInput("probability", ({ task, onCorrect, initialValue, isSolved }) => {
   return container;
 });
 // --------------------
+// PAIR_MATCH - Drag & Drop Paare zuordnen (2 oder 3 Spalten)
+// Beim Verbinden wird die Ziel-Karte mit der Karte in der Quell-Zeile getauscht
+// Beim Prüfen werden nur falsche Verbindungen zurückgesetzt
+// --------------------
+registerInput("pair_match", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = document.createElement("div");
+  container.className = "pair-match-container";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "20px";
+  container.style.marginTop = "10px";
+  container.style.padding = "15px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "12px";
+  container.style.border = "1px solid #e0e0e0";
+  container.style.position = "relative";
+
+  // Konfiguration
+  const numColumns = task.numColumns || 2;
+  const pairs = task.pairs || [];
+  
+  // Normalisiere pairs
+  const normalizedPairs = pairs.map((pair, idx) => ({
+    id: idx,
+    left: pair.left,
+    middle: pair.middle || null,
+    right: pair.right,
+    leftId: `left_${idx}`,
+    middleId: `middle_${idx}`,
+    rightId: `right_${idx}`
+  }));
+
+  // Spalten-Definitionen
+  const columns = [];
+  if (numColumns === 2) {
+    columns.push(
+      { key: 'left', title: task.leftTitle || "📦 Spalte 1", color: "#667eea", bgColor: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
+      { key: 'right', title: task.rightTitle || "🔗 Spalte 2", color: "#4caf50", bgColor: "linear-gradient(135deg, #4caf50 0%, #45a049 100%)" }
+    );
+  } else {
+    columns.push(
+      { key: 'left', title: task.leftTitle || "📦 Ausgeklammert", color: "#667eea", bgColor: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
+      { key: 'middle', title: task.middleTitle || "🔄 Ausmultipliziert", color: "#ff9800", bgColor: "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)" },
+      { key: 'right', title: task.rightTitle || "🔗 Ergebnis", color: "#4caf50", bgColor: "linear-gradient(135deg, #4caf50 0%, #45a049 100%)" }
+    );
+  }
+
+  // Items für jede Spalte - als Array (Reihenfolge = Zeilen)
+  let columnItems = {
+    left: [],
+    middle: [],
+    right: []
+  };
+
+  normalizedPairs.forEach(pair => {
+    columnItems.left.push({
+      id: pair.leftId,
+      pairId: pair.id,
+      text: pair.left,
+      column: 'left',
+      connectedTo: null,
+      connectedFrom: null
+    });
+    
+    if (numColumns === 3 && pair.middle) {
+      columnItems.middle.push({
+        id: pair.middleId,
+        pairId: pair.id,
+        text: pair.middle,
+        column: 'middle',
+        connectedTo: null,
+        connectedFrom: null
+      });
+    }
+    
+    columnItems.right.push({
+      id: pair.rightId,
+      pairId: pair.id,
+      text: pair.right,
+      column: 'right',
+      connectedTo: null,
+      connectedFrom: null
+    });
+  });
+
+  // Verbindungen speichern
+  let connections = [];
+  let showErrors = false;
+
+  // Lade gespeicherte Verbindungen
+  if (initialValue && typeof initialValue === 'object') {
+    if (initialValue.connections) {
+      connections = initialValue.connections;
+    }
+    if (initialValue.columnItems) {
+      columnItems = initialValue.columnItems;
+    }
+    // Stelle Verbindungen in Items wieder her
+    connections.forEach(conn => {
+      const fromItem = findItemById(conn.fromId);
+      const toItem = findItemById(conn.toId);
+      if (fromItem) fromItem.connectedTo = conn.toId;
+      if (toItem) toItem.connectedFrom = conn.fromId;
+    });
+  }
+
+  // Mische die Reihenfolge (nur initial)
+  function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  if (!isSolved && (!initialValue || Object.keys(initialValue).length === 0)) {
+    columnItems.left = shuffleArray([...columnItems.left]);
+    if (numColumns === 3) columnItems.middle = shuffleArray([...columnItems.middle]);
+    columnItems.right = shuffleArray([...columnItems.right]);
+  }
+
+  function findItemById(id) {
+    for (const col of ['left', 'middle', 'right']) {
+      const found = columnItems[col].find(item => item.id === id);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function findItemByPairIdAndColumn(pairId, column) {
+    return columnItems[column].find(item => item.pairId === pairId);
+  }
+
+  function findItemIndex(column, pairId) {
+    return columnItems[column].findIndex(item => item.pairId === pairId);
+  }
+
+  function swapItems(column, indexA, indexB) {
+    if (indexA === indexB) return;
+    [columnItems[column][indexA], columnItems[column][indexB]] = 
+    [columnItems[column][indexB], columnItems[column][indexA]];
+  }
+
+  function isFullyConnected(item) {
+    if (numColumns === 2) {
+      if (item.column === 'left') return item.connectedTo !== null;
+      if (item.column === 'right') return item.connectedFrom !== null;
+      return false;
+    } else {
+      if (item.column === 'left') return item.connectedTo !== null;
+      if (item.column === 'middle') return item.connectedFrom !== null && item.connectedTo !== null;
+      if (item.column === 'right') return item.connectedFrom !== null;
+      return false;
+    }
+  }
+
+  function canBeDragged(item) {
+    if (isSolved) return false;
+    if (item.column === 'right') return false;
+    if (numColumns === 3 && item.column === 'middle') {
+      return item.connectedFrom !== null && item.connectedTo === null;
+    }
+    return item.connectedTo === null;
+  }
+
+  function canBeDropTarget(item, fromColumn) {
+    if (isSolved) return false;
+    if (isFullyConnected(item)) return false;
+    
+    if (fromColumn === 'left' && item.column === 'middle') {
+      return item.connectedFrom === null;
+    }
+    if (fromColumn === 'middle' && item.column === 'right') {
+      return item.connectedFrom === null;
+    }
+    return false;
+  }
+
+  // Kopfzeile
+  const instruction = document.createElement("div");
+  instruction.style.fontSize = "14px";
+  instruction.style.fontWeight = "bold";
+  instruction.style.color = "#333";
+  instruction.style.textAlign = "center";
+  instruction.style.padding = "8px";
+  instruction.style.background = "#e8f0fe";
+  instruction.style.borderRadius = "8px";
+  instruction.style.marginBottom = "10px";
+  instruction.innerHTML = task.instruction || "🎯 Ziehe die Karten in die richtige Reihenfolge!";
+  container.appendChild(instruction);
+
+  // Container für die Spalten
+  const columnsContainer = document.createElement("div");
+  columnsContainer.style.display = "flex";
+  columnsContainer.style.gap = "20px";
+  columnsContainer.style.justifyContent = "center";
+  columnsContainer.style.flexWrap = "wrap";
+  columnsContainer.style.position = "relative";
+
+  const listElements = {};
+
+  // Erstelle Spalten
+  columns.forEach(col => {
+    const columnDiv = document.createElement("div");
+    columnDiv.className = `match-column ${col.key}-column`;
+    columnDiv.style.flex = "1";
+    columnDiv.style.minWidth = "200px";
+    columnDiv.style.background = "white";
+    columnDiv.style.borderRadius = "8px";
+    columnDiv.style.padding = "10px";
+    columnDiv.style.border = `2px solid ${col.color}`;
+    columnDiv.style.position = "relative";
+    
+    const title = document.createElement("div");
+    title.style.textAlign = "center";
+    title.style.fontWeight = "bold";
+    title.style.padding = "8px";
+    title.style.background = col.color;
+    title.style.color = "white";
+    title.style.borderRadius = "6px";
+    title.style.marginBottom = "10px";
+    title.innerHTML = col.title;
+    columnDiv.appendChild(title);
+    
+    const list = document.createElement("div");
+    list.className = `match-list ${col.key}-list`;
+    list.style.display = "flex";
+    list.style.flexDirection = "column";
+    list.style.gap = "10px";
+    list.style.minHeight = "300px";
+    list.style.position = "relative";
+    columnDiv.appendChild(list);
+    
+    columnsContainer.appendChild(columnDiv);
+    listElements[col.key] = list;
+  });
+  
+  container.appendChild(columnsContainer);
+
+  // Canvas für Verbindungslinien
+  const canvas = document.createElement("canvas");
+  canvas.style.position = "absolute";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
+  canvas.style.pointerEvents = "none";
+  canvas.style.zIndex = "10";
+  container.style.position = "relative";
+  container.appendChild(canvas);
+
+  function drawLines() {
+    if (!canvas || !canvas.getContext) return;
+    
+    const rect = container.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
+    
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    connections.forEach(conn => {
+      const fromElement = document.querySelector(`.match-card[data-id="${conn.fromId}"]`);
+      const toElement = document.querySelector(`.match-card[data-id="${conn.toId}"]`);
+      
+      if (fromElement && toElement) {
+        const fromRect = fromElement.getBoundingClientRect();
+        const toRect = toElement.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        
+        const fromX = fromRect.right - containerRect.left - 5;
+        const fromY = (fromRect.top + fromRect.bottom) / 2 - containerRect.top;
+        const toX = toRect.left - containerRect.left + 5;
+        const toY = (toRect.top + toRect.bottom) / 2 - containerRect.top;
+        
+        let lineColor = "#4caf50";
+        if (showErrors && conn.isWrong) {
+          lineColor = "#f44336";
+        }
+        
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Endpunkt
+        ctx.beginPath();
+        ctx.arc(toX, toY, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = lineColor;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(toX, toY, 3, 0, 2 * Math.PI);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        
+        // Startpunkt
+        ctx.beginPath();
+        ctx.arc(fromX, fromY, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = lineColor;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(fromX, fromY, 3, 0, 2 * Math.PI);
+        ctx.fillStyle = "white";
+        ctx.fill();
+      }
+    });
+  }
+
+  let draggedItem = null;
+  let draggedColumn = null;
+  let draggedRow = null;
+
+  function renderItems() {
+    for (const col of ['left', 'middle', 'right']) {
+      if (listElements[col]) {
+        listElements[col].innerHTML = "";
+      }
+    }
+    
+    columnItems.left.forEach((item, idx) => {
+      renderCard(item, listElements.left, columns[0].bgColor, idx);
+    });
+    
+    if (numColumns === 3) {
+      columnItems.middle.forEach((item, idx) => {
+        renderCard(item, listElements.middle, columns[1].bgColor, idx);
+      });
+    }
+    
+    columnItems.right.forEach((item, idx) => {
+      renderCard(item, listElements.right, columns[numColumns-1].bgColor, idx);
+    });
+    
+    setTimeout(drawLines, 50);
+  }
+  
+  function renderCard(item, listEl, bgGradient, rowIndex) {
+    const connected = isFullyConnected(item);
+    const draggable = canBeDragged(item);
+    
+    const card = document.createElement("div");
+    card.className = `match-card ${item.column}-card`;
+    card.setAttribute("data-id", item.id);
+    card.setAttribute("data-pair-id", item.pairId);
+    card.setAttribute("data-column", item.column);
+    card.setAttribute("data-row", rowIndex);
+    card.setAttribute("draggable", draggable);
+    
+    if (connected) {
+      card.style.background = "#e8f5e9";
+      card.style.color = "#2e7d32";
+      card.style.border = "2px solid #a5d6a7";
+    } else {
+      card.style.background = bgGradient;
+      card.style.color = "white";
+      card.style.border = "none";
+    }
+    
+    card.style.padding = "12px";
+    card.style.borderRadius = "8px";
+    card.style.cursor = draggable ? "grab" : "default";
+    card.style.textAlign = "center";
+    card.style.fontSize = "16px";
+    card.style.fontWeight = "500";
+    card.style.boxShadow = "0 2px 5px rgba(0,0,0,0.1)";
+    card.style.transition = "all 0.2s";
+    card.style.opacity = "1";
+    card.innerHTML = item.text;
+    // LaTeX im Kartentext rendern
+  if (typeof renderMathInElement !== 'undefined') {
+    setTimeout(() => {
+      renderMathInElement(card, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '\\(', right: '\\)', display: false},
+          {left: '\\\\[', right: '\\\\]', display: true}
+        ],
+        throwOnError: false
+      });
+    }, 10);
+  }
+    if (draggable) {
+      card.addEventListener("dragstart", (e) => {
+        draggedItem = card;
+        draggedColumn = item.column;
+        draggedRow = rowIndex;
+        e.dataTransfer.setData("text/plain", item.id);
+        card.style.opacity = "0.5";
+        e.dataTransfer.effectAllowed = "move";
+      });
+      
+      card.addEventListener("dragend", () => {
+        if (draggedItem) {
+          draggedItem.style.opacity = "1";
+        }
+        draggedItem = null;
+        draggedColumn = null;
+        draggedRow = null;
+      });
+    }
+    
+    card.addEventListener("dragover", (e) => {
+      if (!draggedItem) return;
+      const targetItem = findItemById(card.getAttribute("data-id"));
+      if (targetItem && canBeDropTarget(targetItem, draggedColumn)) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        card.style.transform = "scale(1.02)";
+        card.style.boxShadow = "0 4px 10px rgba(0,0,0,0.2)";
+      }
+    });
+    
+    card.addEventListener("dragleave", () => {
+      card.style.transform = "scale(1)";
+      card.style.boxShadow = "0 2px 5px rgba(0,0,0,0.1)";
+    });
+    
+    card.addEventListener("drop", (e) => {
+      e.preventDefault();
+      card.style.transform = "scale(1)";
+      card.style.boxShadow = "0 2px 5px rgba(0,0,0,0.1)";
+      
+      if (!draggedItem) return;
+      
+      const fromId = draggedItem.getAttribute("data-id");
+      const fromRow = parseInt(draggedItem.getAttribute("data-row"));
+      const fromItem = findItemById(fromId);
+      const toItem = findItemById(card.getAttribute("data-id"));
+      const toRow = parseInt(card.getAttribute("data-row"));
+      
+      if (!fromItem || !toItem) return;
+      
+      const isValidConnection = (draggedColumn === 'left' && toItem.column === 'middle') ||
+                                (draggedColumn === 'middle' && toItem.column === 'right');
+      
+      if (!isValidConnection) {
+        showError("❌ Falsche Verbindung! Ziehe von links nach rechts.");
+        return;
+      }
+      
+      if (toItem.connectedFrom !== null) {
+        showError("❌ Diese Karte ist bereits verbunden!");
+        return;
+      }
+      
+      if (draggedColumn === 'middle' && fromItem.connectedFrom === null) {
+        showError("❌ Du musst zuerst die linke Karte mit dieser mittleren Karte verbinden!");
+        return;
+      }
+      
+      // Entferne alte Verbindung des fromItems falls vorhanden
+      if (fromItem.connectedTo !== null) {
+        const oldConnIndex = connections.findIndex(c => c.fromId === fromId);
+        if (oldConnIndex !== -1) {
+          const oldToItem = findItemById(connections[oldConnIndex].toId);
+          if (oldToItem) {
+            oldToItem.connectedFrom = null;
+          }
+          connections.splice(oldConnIndex, 1);
+        }
+        fromItem.connectedTo = null;
+      }
+      
+      // Swap: Tausche die Ziel-Karte mit der Karte in der Quell-Zeile
+      if (toRow !== fromRow) {
+        swapItems(toItem.column, toRow, fromRow);
+      }
+      
+      // Verbindung erstellen
+      const connection = {
+        fromId: fromId,
+        toId: toItem.id,
+        fromPairId: fromItem.pairId,
+        toPairId: toItem.pairId,
+        fromColumn: draggedColumn,
+        toColumn: toItem.column,
+        fromRow: fromRow,
+        toRow: toRow,
+        isWrong: false
+      };
+      connections.push(connection);
+      
+      fromItem.connectedTo = toItem.id;
+      toItem.connectedFrom = fromId;
+      
+      showErrors = false;
+      renderItems();
+    });
+    
+    listEl.appendChild(card);
+  }
+  
+  function showError(message) {
+    const errorMsg = document.createElement("div");
+    errorMsg.textContent = message;
+    errorMsg.style.position = "fixed";
+    errorMsg.style.bottom = "20px";
+    errorMsg.style.left = "50%";
+    errorMsg.style.transform = "translateX(-50%)";
+    errorMsg.style.background = "#ffebee";
+    errorMsg.style.color = "#c62828";
+    errorMsg.style.padding = "8px 16px";
+    errorMsg.style.borderRadius = "8px";
+    errorMsg.style.zIndex = "1000";
+    container.appendChild(errorMsg);
+    setTimeout(() => errorMsg.remove(), 1500);
+  }
+
+  function isComplete() {
+    if (numColumns === 2) {
+      return columnItems.left.every(item => item.connectedTo !== null) &&
+             columnItems.right.every(item => item.connectedFrom !== null);
+    } else {
+      return columnItems.left.every(item => item.connectedTo !== null) &&
+             columnItems.middle.every(item => item.connectedFrom !== null && item.connectedTo !== null) &&
+             columnItems.right.every(item => item.connectedFrom !== null);
+    }
+  }
+
+  // Nur falsche Verbindungen zurücksetzen
+  function resetWrongConnections() {
+    const wrongConnections = connections.filter(conn => conn.fromPairId !== conn.toPairId);
+    
+    for (const conn of wrongConnections) {
+      const fromItem = findItemById(conn.fromId);
+      const toItem = findItemById(conn.toId);
+      
+      if (fromItem) {
+        fromItem.connectedTo = null;
+      }
+      if (toItem) {
+        toItem.connectedFrom = null;
+      }
+    }
+    
+    // Entferne falsche Verbindungen aus dem Array
+    connections = connections.filter(conn => conn.fromPairId === conn.toPairId);
+    
+    renderItems();
+    return wrongConnections.length;
+  }
+
+  // Button und Feedback
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.display = "flex";
+  buttonContainer.style.gap = "10px";
+  buttonContainer.style.justifyContent = "center";
+  buttonContainer.style.marginTop = "15px";
+
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "13px";
+  feedbackDiv.style.textAlign = "center";
+  feedbackDiv.style.padding = "8px";
+  feedbackDiv.style.borderRadius = "8px";
+  feedbackDiv.style.marginTop = "10px";
+
+  const resetButton = document.createElement("button");
+  resetButton.textContent = "🔄 Alles zurücksetzen";
+  resetButton.style.padding = "10px 24px";
+  resetButton.style.fontSize = "14px";
+  resetButton.style.fontWeight = "bold";
+  resetButton.style.cursor = "pointer";
+  resetButton.style.background = "#ff9800";
+  resetButton.style.color = "white";
+  resetButton.style.border = "none";
+  resetButton.style.borderRadius = "25px";
+  resetButton.style.transition = "all 0.2s";
+  
+  resetButton.onclick = () => {
+    if (isSolved) return;
+    connections = [];
+    showErrors = false;
+    for (const col of ['left', 'middle', 'right']) {
+      if (columnItems[col]) {
+        columnItems[col].forEach(item => {
+          item.connectedTo = null;
+          item.connectedFrom = null;
+        });
+      }
+    }
+    // Reihenfolge zurücksetzen auf initial gemischt
+    columnItems.left = shuffleArray([...columnItems.left.map(item => ({...item, connectedTo: null, connectedFrom: null}))]);
+    if (numColumns === 3) columnItems.middle = shuffleArray([...columnItems.middle.map(item => ({...item, connectedTo: null, connectedFrom: null}))]);
+    columnItems.right = shuffleArray([...columnItems.right.map(item => ({...item, connectedTo: null, connectedFrom: null}))]);
+    renderItems();
+    feedbackDiv.innerHTML = "";
+  };
+
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Zuordnung prüfen";
+  checkButton.style.padding = "10px 24px";
+  checkButton.style.fontSize = "14px";
+  checkButton.style.fontWeight = "bold";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "25px";
+  checkButton.style.transition = "all 0.2s";
+
+  const fixButton = document.createElement("button");
+  fixButton.textContent = "🔧 Fehler korrigieren";
+  fixButton.style.padding = "10px 24px";
+  fixButton.style.fontSize = "14px";
+  fixButton.style.fontWeight = "bold";
+  fixButton.style.cursor = "pointer";
+  fixButton.style.background = "#4caf50";
+  fixButton.style.color = "white";
+  fixButton.style.border = "none";
+  fixButton.style.borderRadius = "25px";
+  fixButton.style.transition = "all 0.2s";
+  fixButton.style.display = "none";
+
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+    resetButton.disabled = true;
+    resetButton.style.background = "#ccc";
+    fixButton.style.display = "none";
+  }
+
+  checkButton.onclick = () => {
+    if (isSolved) return;
+    
+    const complete = isComplete();
+    
+    if (complete) {
+      let allCorrect = true;
+      let wrongCount = 0;
+      
+      for (const conn of connections) {
+        if (conn.fromPairId !== conn.toPairId) {
+          allCorrect = false;
+          wrongCount++;
+          conn.isWrong = true;
+        } else {
+          conn.isWrong = false;
+        }
+      }
+      
+      if (allCorrect) {
+        feedbackDiv.innerHTML = "✅ Richtig! Alle Zuordnungen sind korrekt! 🎉";
+        feedbackDiv.style.background = "#e8f5e9";
+        feedbackDiv.style.color = "#2e7d32";
+        checkButton.disabled = true;
+        checkButton.style.background = "#4caf50";
+        checkButton.textContent = "✓ Gelöst";
+        resetButton.disabled = true;
+        resetButton.style.background = "#ccc";
+        fixButton.style.display = "none";
+        
+        const result = {
+          connections: connections,
+          columnItems: columnItems
+        };
+        onCorrect(result);
+      } else {
+        showErrors = true;
+        feedbackDiv.innerHTML = `❌ ${wrongCount} Fehler gefunden! Klicke auf "Fehler korrigieren" um nur die falschen Verbindungen zu lösen.`;
+        feedbackDiv.style.background = "#ffebee";
+        feedbackDiv.style.color = "#c62828";
+        fixButton.style.display = "inline-block";
+        drawLines();
+      }
+    } else {
+      feedbackDiv.innerHTML = "⚠️ Bitte verbinde alle Karten miteinander!";
+      feedbackDiv.style.background = "#fff3e0";
+      feedbackDiv.style.color = "#ff9800";
+      fixButton.style.display = "none";
+      
+      setTimeout(() => {
+        if (!isSolved) {
+          feedbackDiv.innerHTML = "";
+        }
+      }, 2000);
+    }
+  };
+
+  fixButton.onclick = () => {
+    if (isSolved) return;
+    
+    const removedCount = resetWrongConnections();
+    showErrors = false;
+    fixButton.style.display = "none";
+    
+    if (removedCount > 0) {
+      feedbackDiv.innerHTML = `🔧 ${removedCount} falsche Verbindung(en) wurden gelöst. Du kannst sie jetzt neu verbinden!`;
+      feedbackDiv.style.background = "#e8f5e9";
+      feedbackDiv.style.color = "#2e7d32";
+    } else {
+      feedbackDiv.innerHTML = "✅ Keine falschen Verbindungen gefunden!";
+      feedbackDiv.style.background = "#e8f5e9";
+      feedbackDiv.style.color = "#2e7d32";
+    }
+    
+    setTimeout(() => {
+      if (!isSolved) {
+        feedbackDiv.innerHTML = "";
+      }
+    }, 3000);
+  };
+
+  buttonContainer.appendChild(resetButton);
+  buttonContainer.appendChild(checkButton);
+  buttonContainer.appendChild(fixButton);
+  container.appendChild(buttonContainer);
+  container.appendChild(feedbackDiv);
+
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (!isSolved) drawLines();
+    }, 100);
+  });
+
+  renderItems();
+
+  return container;
+});
+// --------------------
+// TIMED_QUIZ - Zeitgesteuertes Quiz mit Flaggen-System
+// Dynamische Flaggen basierend auf Geschwindigkeit (0-3)
+// --------------------
+registerInput("timed_quiz", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = document.createElement("div");
+  container.className = "timed-quiz";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "16px";
+  container.style.padding = "20px";
+  container.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+  container.style.borderRadius = "16px";
+  container.style.color = "white";
+  container.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
+  container.style.width = "100%";
+  container.style.boxSizing = "border-box";
+
+  // Quiz-Konfiguration
+  const timeLimit = task.timeLimit || 60;
+  const questionPool = task.questionPool || "multiplication";
+  const maxNumber = task.maxNumber || 12;
+  const inputMode = task.inputMode || "text";
+  const choicesCount = task.choicesCount || 4;
+  
+  const flag3Threshold = task.flag3Threshold || 2.0;
+  const flag2Threshold = task.flag2Threshold || 5.0;
+  
+  const quizTitle = task.quizTitle || "⚡ Kopfrechnen-Quiz ⚡";
+  
+  // Quiz-Zustand
+  let currentQuestion = null;
+  let score = 0;
+  let wrongAnswers = 0;
+  let timeLeft = timeLimit;
+  let timerInterval = null;
+  let isActive = false;
+  let isFinished = false;
+  let startTime = null;
+  let endTime = null;
+  let userAnswers = [];
+  let achievedFlags = 0;
+
+  // Lade gespeicherten Zustand
+  let savedState = null;
+  if (initialValue && typeof initialValue === 'object') {
+    savedState = initialValue;
+    isFinished = savedState.isFinished || false;
+    if (isFinished) {
+      score = savedState.score || 0;
+      wrongAnswers = savedState.wrongAnswers || 0;
+      achievedFlags = savedState.achievedFlags || 0;
+    }
+  }
+
+  // ========== TITEL-BEREICH ==========
+  const titleContainer = document.createElement("div");
+  titleContainer.style.textAlign = "center";
+  titleContainer.style.marginBottom = "20px";
+  titleContainer.style.padding = "15px";
+  titleContainer.style.background = "rgba(255,255,255,0.15)";
+  titleContainer.style.borderRadius = "12px";
+  titleContainer.style.borderBottom = "2px solid rgba(255,255,255,0.3)";
+  
+  const titleText = document.createElement("div");
+  titleText.style.fontSize = "28px";
+  titleText.style.fontWeight = "bold";
+  titleText.style.textShadow = "2px 2px 4px rgba(0,0,0,0.2)";
+  titleText.innerHTML = quizTitle;
+  titleContainer.appendChild(titleText);
+  container.appendChild(titleContainer);
+
+  // ========== STATISTIK-BEREICH ==========
+  const statsContainer = document.createElement("div");
+  statsContainer.style.display = "flex";
+  statsContainer.style.justifyContent = "space-between";
+  statsContainer.style.alignItems = "center";
+  statsContainer.style.marginBottom = "10px";
+  statsContainer.style.padding = "10px";
+  statsContainer.style.background = "rgba(255,255,255,0.2)";
+  statsContainer.style.borderRadius = "12px";
+  statsContainer.style.flexWrap = "wrap";
+  statsContainer.style.gap = "10px";
+
+  const scoreDisplay = document.createElement("div");
+  scoreDisplay.style.fontSize = "20px";
+  scoreDisplay.style.fontWeight = "bold";
+  scoreDisplay.innerHTML = `✅ ${score}`;
+
+  const wrongDisplay = document.createElement("div");
+  wrongDisplay.style.fontSize = "20px";
+  wrongDisplay.style.fontWeight = "bold";
+  wrongDisplay.innerHTML = `❌ ${wrongAnswers}`;
+
+  const timerDisplay = document.createElement("div");
+  timerDisplay.style.fontSize = "20px";
+  timerDisplay.style.fontWeight = "bold";
+  timerDisplay.style.fontFamily = "monospace";
+  timerDisplay.style.background = "rgba(0,0,0,0.3)";
+  timerDisplay.style.padding = "5px 15px";
+  timerDisplay.style.borderRadius = "30px";
+  timerDisplay.innerHTML = formatTime(timeLeft);
+
+  statsContainer.appendChild(scoreDisplay);
+  statsContainer.appendChild(wrongDisplay);
+  statsContainer.appendChild(timerDisplay);
+  container.appendChild(statsContainer);
+
+  // ========== START-BUTTON ==========
+  const startContainer = document.createElement("div");
+  startContainer.style.display = "flex";
+  startContainer.style.justifyContent = "center";
+  startContainer.style.marginBottom = "20px";
+
+  const startButton = document.createElement("button");
+  startButton.textContent = "🚀 START 🚀";
+  startButton.style.padding = "15px 40px";
+  startButton.style.fontSize = "24px";
+  startButton.style.fontWeight = "bold";
+  startButton.style.background = "#ffd700";
+  startButton.style.color = "#333";
+  startButton.style.border = "none";
+  startButton.style.borderRadius = "50px";
+  startButton.style.cursor = "pointer";
+  startButton.style.transition = "transform 0.2s, background 0.2s";
+  
+  startButton.onmouseenter = () => startButton.style.transform = "scale(1.05)";
+  startButton.onmouseleave = () => startButton.style.transform = "scale(1)";
+  
+  startContainer.appendChild(startButton);
+  container.appendChild(startContainer);
+
+  // ========== FRAGEBEREICH ==========
+  const questionContainer = document.createElement("div");
+  questionContainer.style.display = "none";
+  questionContainer.style.textAlign = "center";
+  questionContainer.style.padding = "20px";
+  questionContainer.style.background = "rgba(255,255,255,0.15)";
+  questionContainer.style.borderRadius = "16px";
+  questionContainer.style.marginBottom = "20px";
+
+  const questionText = document.createElement("div");
+  questionText.style.fontSize = "48px";
+  questionText.style.fontWeight = "bold";
+  questionText.style.marginBottom = "20px";
+  questionText.style.fontFamily = "monospace";
+
+  const inputArea = document.createElement("div");
+  inputArea.style.display = "flex";
+  inputArea.style.flexDirection = "column";
+  inputArea.style.alignItems = "center";
+  inputArea.style.gap = "10px";
+
+  questionContainer.appendChild(questionText);
+  questionContainer.appendChild(inputArea);
+  container.appendChild(questionContainer);
+
+  // ========== ERGEBNISBEREICH ==========
+  const resultContainer = document.createElement("div");
+  resultContainer.style.textAlign = "center";
+  resultContainer.style.padding = "15px";
+  resultContainer.style.borderRadius = "12px";
+  resultContainer.style.background = "rgba(0,0,0,0.3)";
+  resultContainer.style.marginTop = "10px";
+
+  const resultText = document.createElement("div");
+  resultText.style.fontSize = "16px";
+  resultContainer.appendChild(resultText);
+  container.appendChild(resultContainer);
+
+  // ============================================
+  // HILFSFUNKTIONEN
+  // ============================================
+  
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  function updateTimerDisplay() {
+    timerDisplay.innerHTML = formatTime(timeLeft);
+    if (timeLeft <= 10 && isActive) {
+      timerDisplay.style.background = "rgba(255,0,0,0.5)";
+      timerDisplay.style.animation = "pulse 1s infinite";
+    } else {
+      timerDisplay.style.background = "rgba(0,0,0,0.3)";
+      timerDisplay.style.animation = "none";
+    }
+  }
+
+  function updateScoreDisplay() {
+    scoreDisplay.innerHTML = `✅ ${score}`;
+  }
+
+  function updateWrongDisplay() {
+    wrongDisplay.innerHTML = `❌ ${wrongAnswers}`;
+  }
+
+  function calculateFlags() {
+    const hasMoreCorrectThanWrong = score > wrongAnswers;
+    
+    if (!hasMoreCorrectThanWrong || score === 0) {
+      return { flags: 0, secondsPerAnswer: 0, difficultyText: "Keine Flagge - Mehr richtige Antworten benötigt!" };
+    }
+    
+    if (!startTime) {
+      return { flags: 0, secondsPerAnswer: 0, difficultyText: "Keine Flagge" };
+    }
+    
+    const endTimeUsed = endTime || Date.now();
+    const elapsedSeconds = (endTimeUsed - startTime) / 1000;
+    const secondsPerAnswer = elapsedSeconds / score;
+    
+    let flags = 1;
+    let difficultyText = "";
+    
+    if (secondsPerAnswer < flag3Threshold) {
+      flags = 3;
+      difficultyText = "Sturm";
+    } else if (secondsPerAnswer < flag2Threshold) {
+      flags = 2;
+      difficultyText = "Wind";
+    } else {
+      flags = 1;
+      difficultyText = "Brise";
+    }
+    
+    achievedFlags = flags;
+    
+    return { flags, secondsPerAnswer, difficultyText };
+  }
+
+  function finishQuiz() {
+    if (isFinished) return;
+    
+    isActive = false;
+    isFinished = true;
+    endTime = Date.now();
+    
+    if (timerInterval) clearInterval(timerInterval);
+    
+    const { flags, secondsPerAnswer, difficultyText } = calculateFlags();
+    
+    questionContainer.style.display = "none";
+    startContainer.style.display = "none";
+    
+    const gameOverContainer = document.createElement("div");
+    gameOverContainer.style.textAlign = "center";
+    gameOverContainer.style.padding = "20px";
+    
+    let medalEmoji = "";
+    let flagMessage = "";
+    
+    if (flags === 3) {
+      medalEmoji = "🏆🏆🏆";
+      flagMessage = "Du erhältst 3 Flaggen! (Sturm)";
+    } else if (flags === 2) {
+      medalEmoji = "🏆🏆";
+      flagMessage = "Du erhältst 2 Flaggen! (Wind)";
+    } else if (flags === 1) {
+      medalEmoji = "🏆";
+      flagMessage = "Du erhältst 1 Flagge! (Brise)";
+    } else {
+      medalEmoji = "❌";
+      flagMessage = "Keine Flagge - Du brauchst mehr richtige als falsche Antworten!";
+    }
+    
+    gameOverContainer.innerHTML = `
+      <div style="font-size: 28px; font-weight: bold; margin-bottom: 15px;">⏰ QUIZ BEENDET! ⏰</div>
+      <div style="font-size: 24px; margin-bottom: 10px;">${medalEmoji}</div>
+      <div style="font-size: 20px; margin-bottom: 10px;">✅ Richtige Antworten: ${score}</div>
+      <div style="font-size: 20px; margin-bottom: 10px;">❌ Falsche Antworten: ${wrongAnswers}</div>
+      ${secondsPerAnswer ? `<div style="font-size: 16px; margin-bottom: 5px;">⚡ Durchschnittliche Zeit pro richtige Antwort: ${secondsPerAnswer.toFixed(2)} Sekunden</div>` : ''}
+      <div style="font-size: 18px; font-weight: bold; margin-top: 15px; padding: 10px; background: rgba(255,215,0,0.3); border-radius: 10px;">
+        🎉 ${flagMessage} 🎉
+      </div>
+    `;
+    
+    while (resultContainer.firstChild) resultContainer.removeChild(resultContainer.firstChild);
+    resultContainer.appendChild(gameOverContainer);
+    resultContainer.style.background = "rgba(0,0,0,0.5)";
+    
+    // ========== WICHTIG: Rückgabe für das Flaggen-System ==========
+    // Die app.js zeigt unter dem Spielfeld die task.difficulty an
+    // Deshalb übergeben wir die erreichte Flaggenzahl als Ergebnis
+    // Die app.js speichert diesen Wert und zeigt bei der Belohnung die richtige Anzahl an
+    
+    const finalResult = {
+      score: score,
+      wrongAnswers: wrongAnswers,
+      achievedFlags: flags,
+      secondsPerAnswer: secondsPerAnswer || 0,
+      totalQuestions: score + wrongAnswers,
+      userAnswers: userAnswers,
+      isFinished: true
+    };
+    
+    // Wir übergeben die erreichte Flaggenzahl (0-3)
+    // Das System speichert diesen Wert und verwendet ihn für die Anzeige
+    onCorrect(flags);
+  }
+
+  function generateQuestion() {
+    if (!isActive || isFinished) return;
+    
+    let num1, num2, operator, questionStr, correctAnswer;
+    
+    let questionType = questionPool;
+    if (questionType === "mixed") {
+      const types = ["addition", "subtraction", "multiplication", "division"];
+      questionType = types[Math.floor(Math.random() * types.length)];
+    }
+    
+    switch (questionType) {
+      case "addition":
+        num1 = Math.floor(Math.random() * maxNumber) + 1;
+        num2 = Math.floor(Math.random() * maxNumber) + 1;
+        operator = "+";
+        correctAnswer = num1 + num2;
+        questionStr = `${num1} ${operator} ${num2}`;
+        break;
+        
+      case "subtraction":
+        num1 = Math.floor(Math.random() * maxNumber) + 1;
+        num2 = Math.floor(Math.random() * maxNumber) + 1;
+        if (num1 < num2) [num1, num2] = [num2, num1];
+        operator = "-";
+        correctAnswer = num1 - num2;
+        questionStr = `${num1} ${operator} ${num2}`;
+        break;
+        
+      case "division":
+        num2 = Math.floor(Math.random() * maxNumber) + 1;
+        const result = Math.floor(Math.random() * maxNumber) + 1;
+        num1 = num2 * result;
+        operator = ":";
+        correctAnswer = result;
+        questionStr = `${num1} ${operator} ${num2}`;
+        break;
+        
+      case "multiplication":
+      default:
+        num1 = Math.floor(Math.random() * maxNumber) + 1;
+        num2 = Math.floor(Math.random() * maxNumber) + 1;
+        operator = "×";
+        correctAnswer = num1 * num2;
+        questionStr = `${num1} ${operator} ${num2}`;
+        break;
+    }
+    
+    currentQuestion = {
+      text: questionStr,
+      answer: correctAnswer,
+      type: questionType
+    };
+    
+    questionText.innerHTML = questionStr;
+    
+    inputArea.innerHTML = "";
+    
+    if (inputMode === "multiple_choice") {
+      const choices = generateChoices(correctAnswer, choicesCount);
+      const buttonsContainer = document.createElement("div");
+      buttonsContainer.style.display = "grid";
+      buttonsContainer.style.gridTemplateColumns = `repeat(${Math.min(choicesCount, 4)}, 1fr)`;
+      buttonsContainer.style.gap = "10px";
+      buttonsContainer.style.width = "100%";
+      buttonsContainer.style.maxWidth = "400px";
+      
+      choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.textContent = choice;
+        btn.style.padding = "15px 20px";
+        btn.style.fontSize = "20px";
+        btn.style.fontWeight = "bold";
+        btn.style.background = "white";
+        btn.style.color = "#667eea";
+        btn.style.border = "none";
+        btn.style.borderRadius = "12px";
+        btn.style.cursor = "pointer";
+        btn.style.transition = "transform 0.1s";
+        
+        btn.onclick = () => {
+          if (!isActive || isFinished) return;
+          checkAnswer(choice);
+        };
+        
+        btn.onmouseenter = () => btn.style.transform = "scale(1.05)";
+        btn.onmouseleave = () => btn.style.transform = "scale(1)";
+        
+        buttonsContainer.appendChild(btn);
+      });
+      
+      inputArea.appendChild(buttonsContainer);
+      
+    } else {
+      const textInput = document.createElement("input");
+      textInput.type = "number";
+      textInput.placeholder = "Antwort eingeben...";
+      textInput.style.padding = "15px 20px";
+      textInput.style.fontSize = "20px";
+      textInput.style.textAlign = "center";
+      textInput.style.borderRadius = "12px";
+      textInput.style.border = "none";
+      textInput.style.width = "150px";
+      
+      const submitBtn = document.createElement("button");
+      submitBtn.textContent = "✓ Prüfen";
+      submitBtn.style.padding = "12px 25px";
+      submitBtn.style.fontSize = "16px";
+      submitBtn.style.fontWeight = "bold";
+      submitBtn.style.background = "#ffd700";
+      submitBtn.style.color = "#333";
+      submitBtn.style.border = "none";
+      submitBtn.style.borderRadius = "25px";
+      submitBtn.style.cursor = "pointer";
+      
+      const checkAnswerHandler = () => {
+        if (!isActive || isFinished) return;
+        const userAnswer = parseFloat(textInput.value);
+        if (!isNaN(userAnswer)) {
+          checkAnswer(userAnswer);
+          textInput.value = "";
+          textInput.focus();
+        } else {
+          resultText.innerHTML = "⚠️ Bitte eine Zahl eingeben!";
+          setTimeout(() => {
+            if (isActive && !isFinished) resultText.innerHTML = "";
+          }, 1000);
+        }
+      };
+      
+      submitBtn.onclick = checkAnswerHandler;
+      textInput.onkeypress = (e) => {
+        if (e.key === "Enter") checkAnswerHandler();
+      };
+      
+      const inputRow = document.createElement("div");
+      inputRow.style.display = "flex";
+      inputRow.style.gap = "10px";
+      inputRow.style.alignItems = "center";
+      inputRow.style.justifyContent = "center";
+      inputRow.appendChild(textInput);
+      inputRow.appendChild(submitBtn);
+      
+      inputArea.appendChild(inputRow);
+      
+      setTimeout(() => textInput.focus(), 10);
+    }
+  }
+  
+  function generateChoices(correct, count) {
+    const choices = new Set();
+    choices.add(correct);
+    
+    const variation = Math.max(3, Math.floor(correct * 0.3));
+    
+    while (choices.size < count) {
+      let wrong;
+      if (Math.random() > 0.5) {
+        wrong = correct + (Math.floor(Math.random() * variation) + 1);
+      } else {
+        wrong = correct - (Math.floor(Math.random() * variation) + 1);
+      }
+      if (wrong > 0) choices.add(wrong);
+    }
+    
+    const choicesArray = Array.from(choices);
+    for (let i = choicesArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [choicesArray[i], choicesArray[j]] = [choicesArray[j], choicesArray[i]];
+    }
+    
+    return choicesArray;
+  }
+  
+  function checkAnswer(userAnswer) {
+    if (!isActive || isFinished) return;
+    
+    const isCorrect = Math.abs(userAnswer - currentQuestion.answer) < 0.01;
+    
+    if (isCorrect) {
+      score++;
+      userAnswers.push({
+        question: currentQuestion.text,
+        userAnswer: userAnswer,
+        correctAnswer: currentQuestion.answer,
+        isCorrect: true,
+        timestamp: Date.now()
+      });
+      
+      resultText.innerHTML = "✅ Richtig! ✅";
+      resultText.style.color = "#90EE90";
+      
+      setTimeout(() => {
+        if (isActive && !isFinished) {
+          resultText.innerHTML = "";
+          generateQuestion();
+        }
+      }, 200);
+      
+      updateScoreDisplay();
+      
+    } else {
+      wrongAnswers++;
+      userAnswers.push({
+        question: currentQuestion.text,
+        userAnswer: userAnswer,
+        correctAnswer: currentQuestion.answer,
+        isCorrect: false,
+        timestamp: Date.now()
+      });
+      
+      resultText.innerHTML = `❌ Falsch! ${currentQuestion.text} = ${currentQuestion.answer} ❌`;
+      resultText.style.color = "#ff9999";
+      
+      setTimeout(() => {
+        if (isActive && !isFinished) {
+          resultText.innerHTML = "";
+          generateQuestion();
+        }
+      }, 600);
+      
+      updateWrongDisplay();
+    }
+  }
+  
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    
+    timerInterval = setInterval(() => {
+      if (!isActive || isFinished) return;
+      
+      if (timeLeft <= 1) {
+        if (timerInterval) clearInterval(timerInterval);
+        timeLeft = 0;
+        updateTimerDisplay();
+        finishQuiz();
+      } else {
+        timeLeft--;
+        updateTimerDisplay();
+        
+        if (timeLeft === 5) {
+          resultText.innerHTML = "⚠️ Nur noch 5 Sekunden! ⚠️";
+          resultText.style.color = "#ffcc00";
+          setTimeout(() => {
+            if (isActive && !isFinished && timeLeft > 0) resultText.innerHTML = "";
+          }, 2000);
+        }
+      }
+    }, 1000);
+  }
+  
+  function startQuiz() {
+    if (isFinished) return;
+    
+    isActive = true;
+    startTime = Date.now();
+    score = 0;
+    wrongAnswers = 0;
+    timeLeft = timeLimit;
+    userAnswers = [];
+    achievedFlags = 0;
+    
+    updateScoreDisplay();
+    updateWrongDisplay();
+    updateTimerDisplay();
+    
+    startContainer.style.display = "none";
+    questionContainer.style.display = "block";
+    
+    resultContainer.innerHTML = "";
+    const newResultText = document.createElement("div");
+    newResultText.style.fontSize = "16px";
+    resultContainer.appendChild(newResultText);
+    resultText.innerHTML = "";
+    
+    startTimer();
+    generateQuestion();
+  }
+  
+  startButton.onclick = startQuiz;
+  
+  if (isFinished && savedState) {
+    startContainer.style.display = "none";
+    questionContainer.style.display = "none";
+    
+    const completedContainer = document.createElement("div");
+    completedContainer.style.textAlign = "center";
+    completedContainer.style.padding = "20px";
+    
+    let medalEmoji = "";
+    if (achievedFlags === 3) medalEmoji = "🏆🏆🏆";
+    else if (achievedFlags === 2) medalEmoji = "🏆🏆";
+    else if (achievedFlags === 1) medalEmoji = "🏆";
+    else medalEmoji = "❌";
+    
+    completedContainer.innerHTML = `
+      <div style="font-size: 24px; font-weight: bold; margin-bottom: 15px;">✅ Quiz bereits abgeschlossen! ✅</div>
+      <div style="font-size: 20px; margin-bottom: 10px;">${medalEmoji}</div>
+      <div style="font-size: 18px;">✅ Richtige Antworten: ${score}</div>
+      <div style="font-size: 18px;">❌ Falsche Antworten: ${savedState.wrongAnswers || 0}</div>
+      <div style="font-size: 18px;">Erhaltene Flaggen: ${achievedFlags}</div>
+    `;
+    
+    while (resultContainer.firstChild) resultContainer.removeChild(resultContainer.firstChild);
+    resultContainer.appendChild(completedContainer);
+  }
+  
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  return container;
+});
+// --------------------
+// DIVISIBILITY_QUIZ - Ja/Nein Quiz mit vordefinierten Zahlen
+// Nutzbar für Teilbarkeit, Primzahlen, etc.
+// Die Aufgabe hat eine feste difficulty (wie andere Aufgaben auch)
+// Die Flagge wird nur vergeben, wenn die Prozentzahl erreicht wird
+// --------------------
+registerInput("divisibility_quiz", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = document.createElement("div");
+  container.className = "divisibility-quiz";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "16px";
+  container.style.padding = "20px";
+  container.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+  container.style.borderRadius = "16px";
+  container.style.color = "white";
+  container.style.boxShadow = "0 10px 30px rgba(0,0,0,0.2)";
+  container.style.width = "100%";
+  container.style.boxSizing = "border-box";
+
+  // Quiz-Konfiguration
+  const timeLimit = task.timeLimit || 60;
+  const requiredPercent = task.requiredPercent || 70; // Prozent für Flagge (0-100)
+  const difficulty = task.difficulty || 1; // Feste difficulty für die Aufgabe
+  
+  // Zahlen-Set aus der Task-Konfiguration
+  const numbersSet = task.numbers || [];
+  const checkFunctionName = task.checkFunction || "divisible";
+  const checkDivisor = task.divisor || 2;
+  const threshold = task.threshold || 100;
+  
+  const quizTitle = task.quizTitle || `🔢 Quiz`;
+  const questionText = task.questionText || "Ist die Zahl...?";
+  
+  // Quiz-Zustand
+  let currentNumber = null;
+  let currentAnswer = null;
+  let score = 0;
+  let answered = 0;
+  let timeLeft = timeLimit;
+  let timerInterval = null;
+  let isActive = false;
+  let isFinished = false;
+  let questions = [];
+  let currentQuestionIndex = 0;
+  let waitingForNext = false;
+  let nextQuestionTimeout = null;
+
+  // Lade gespeicherten Zustand
+  let savedState = null;
+  if (initialValue && typeof initialValue === 'object') {
+    savedState = initialValue;
+    isFinished = savedState.isFinished || false;
+    if (isFinished) {
+      score = savedState.score || 0;
+      answered = savedState.answered || 0;
+    }
+  }
+
+  // ========== PRÜFFUNKTIONEN ==========
+  const checkFunctions = {
+    divisible: (num) => num % checkDivisor === 0,
+    
+    isPrime: (num) => {
+      if (num < 2) return false;
+      for (let i = 2; i <= Math.sqrt(num); i++) {
+        if (num % i === 0) return false;
+      }
+      return true;
+    },
+    
+    isEven: (num) => num % 2 === 0,
+    isOdd: (num) => num % 2 !== 0,
+    
+    greaterThan: (num) => num > threshold,
+    lessThan: (num) => num < threshold,
+    
+    isPerfectSquare: (num) => {
+      const root = Math.sqrt(num);
+      return root === Math.floor(root);
+    },
+    
+    divisibleBy3: (num) => {
+      let sum = 0;
+      let n = Math.abs(num);
+      while (n > 0) {
+        sum += n % 10;
+        n = Math.floor(n / 10);
+      }
+      return sum % 3 === 0;
+    },
+    divisibleBy5: (num) => num % 5 === 0,
+    divisibleBy10: (num) => num % 10 === 0
+  };
+  
+  let checkFunction = checkFunctions[checkFunctionName];
+  if (!checkFunction) {
+    checkFunction = (num) => num % checkDivisor === 0;
+  }
+
+  // ========== FRAGEN GENERIEREN ==========
+  function generateQuestionsFromSet() {
+    const newQuestions = [];
+    
+    if (numbersSet && numbersSet.length > 0) {
+      for (const item of numbersSet) {
+        let number, answer;
+        
+        if (typeof item === 'object') {
+          number = item.value;
+          answer = item.answer;
+        } else {
+          number = item;
+          answer = checkFunction(number);
+        }
+        
+        newQuestions.push({ number, answer });
+      }
+    }
+    
+    return newQuestions;
+  }
+
+  // ========== UI ELEMENTE ==========
+  
+  // Titel-Bereich
+  const titleContainer = document.createElement("div");
+  titleContainer.style.textAlign = "center";
+  titleContainer.style.marginBottom = "20px";
+  titleContainer.style.padding = "15px";
+  titleContainer.style.background = "rgba(255,255,255,0.15)";
+  titleContainer.style.borderRadius = "12px";
+  titleContainer.style.borderBottom = "2px solid rgba(255,255,255,0.3)";
+  
+  const titleText = document.createElement("div");
+  titleText.style.fontSize = "24px";
+  titleText.style.fontWeight = "bold";
+  titleText.innerHTML = quizTitle;
+  titleContainer.appendChild(titleText);
+  
+  const subText = document.createElement("div");
+  subText.style.fontSize = "14px";
+  subText.style.marginTop = "8px";
+  subText.style.opacity = "0.9";
+  subText.innerHTML = `${questionText} (${requiredPercent}% richtig für Flagge)`;
+  titleContainer.appendChild(subText);
+  
+  container.appendChild(titleContainer);
+
+  // Statistik-Bereich
+  const statsContainer = document.createElement("div");
+  statsContainer.style.display = "flex";
+  statsContainer.style.justifyContent = "space-between";
+  statsContainer.style.alignItems = "center";
+  statsContainer.style.marginBottom = "10px";
+  statsContainer.style.padding = "10px";
+  statsContainer.style.background = "rgba(255,255,255,0.2)";
+  statsContainer.style.borderRadius = "12px";
+  statsContainer.style.flexWrap = "wrap";
+  statsContainer.style.gap = "10px";
+
+  const scoreDisplay = document.createElement("div");
+  scoreDisplay.style.fontSize = "18px";
+  scoreDisplay.style.fontWeight = "bold";
+  scoreDisplay.innerHTML = `✅ 0/${numbersSet.length}`;
+
+  const timerDisplay = document.createElement("div");
+  timerDisplay.style.fontSize = "20px";
+  timerDisplay.style.fontWeight = "bold";
+  timerDisplay.style.fontFamily = "monospace";
+  timerDisplay.style.background = "rgba(0,0,0,0.3)";
+  timerDisplay.style.padding = "5px 15px";
+  timerDisplay.style.borderRadius = "30px";
+  timerDisplay.innerHTML = formatTime(timeLeft);
+
+  const progressDisplay = document.createElement("div");
+  progressDisplay.style.fontSize = "16px";
+  progressDisplay.style.fontWeight = "bold";
+  progressDisplay.innerHTML = "📊 0%";
+
+  statsContainer.appendChild(scoreDisplay);
+  statsContainer.appendChild(progressDisplay);
+  statsContainer.appendChild(timerDisplay);
+  container.appendChild(statsContainer);
+
+  // Start-Button
+  const startContainer = document.createElement("div");
+  startContainer.style.display = "flex";
+  startContainer.style.justifyContent = "center";
+  startContainer.style.marginBottom = "20px";
+
+  const startButton = document.createElement("button");
+  startButton.textContent = "🚀 START 🚀";
+  startButton.style.padding = "15px 40px";
+  startButton.style.fontSize = "24px";
+  startButton.style.fontWeight = "bold";
+  startButton.style.background = "#ffd700";
+  startButton.style.color = "#333";
+  startButton.style.border = "none";
+  startButton.style.borderRadius = "50px";
+  startButton.style.cursor = "pointer";
+  startButton.style.transition = "transform 0.2s, background 0.2s";
+  
+  startButton.onmouseenter = () => startButton.style.transform = "scale(1.05)";
+  startButton.onmouseleave = () => startButton.style.transform = "scale(1)";
+  
+  startContainer.appendChild(startButton);
+  container.appendChild(startContainer);
+
+  // Fragebereich
+  const questionContainer = document.createElement("div");
+  questionContainer.style.display = "none";
+  questionContainer.style.textAlign = "center";
+  questionContainer.style.padding = "20px";
+  questionContainer.style.background = "rgba(255,255,255,0.15)";
+  questionContainer.style.borderRadius = "16px";
+  questionContainer.style.marginBottom = "20px";
+
+  const numberDisplay = document.createElement("div");
+  numberDisplay.style.fontSize = "64px";
+  numberDisplay.style.fontWeight = "bold";
+  numberDisplay.style.marginBottom = "30px";
+  numberDisplay.style.fontFamily = "monospace";
+  numberDisplay.style.letterSpacing = "2px";
+  
+  const buttonContainer = document.createElement("div");
+  buttonContainer.style.display = "flex";
+  buttonContainer.style.gap = "20px";
+  buttonContainer.style.justifyContent = "center";
+  
+  const yesButton = document.createElement("button");
+  yesButton.textContent = "✅ JA";
+  yesButton.style.padding = "15px 40px";
+  yesButton.style.fontSize = "24px";
+  yesButton.style.fontWeight = "bold";
+  yesButton.style.background = "#4caf50";
+  yesButton.style.color = "white";
+  yesButton.style.border = "none";
+  yesButton.style.borderRadius = "50px";
+  yesButton.style.cursor = "pointer";
+  yesButton.style.transition = "transform 0.2s";
+  
+  const noButton = document.createElement("button");
+  noButton.textContent = "❌ NEIN";
+  noButton.style.padding = "15px 40px";
+  noButton.style.fontSize = "24px";
+  noButton.style.fontWeight = "bold";
+  noButton.style.background = "#f44336";
+  noButton.style.color = "white";
+  noButton.style.border = "none";
+  noButton.style.borderRadius = "50px";
+  noButton.style.cursor = "pointer";
+  noButton.style.transition = "transform 0.2s";
+  
+  buttonContainer.appendChild(yesButton);
+  buttonContainer.appendChild(noButton);
+  
+  questionContainer.appendChild(numberDisplay);
+  questionContainer.appendChild(buttonContainer);
+  container.appendChild(questionContainer);
+
+  // Ergebnisbereich
+  const resultContainer = document.createElement("div");
+  resultContainer.style.textAlign = "center";
+  resultContainer.style.padding = "15px";
+  resultContainer.style.borderRadius = "12px";
+  resultContainer.style.background = "rgba(0,0,0,0.3)";
+  resultContainer.style.marginTop = "10px";
+
+  const resultText = document.createElement("div");
+  resultText.style.fontSize = "16px";
+  resultContainer.appendChild(resultText);
+  container.appendChild(resultContainer);
+
+  // ============================================
+  // HILFSFUNKTIONEN
+  // ============================================
+  
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  function updateTimerDisplay() {
+    timerDisplay.innerHTML = formatTime(timeLeft);
+    if (timeLeft <= 10 && isActive) {
+      timerDisplay.style.background = "rgba(255,0,0,0.5)";
+      timerDisplay.style.animation = "pulse 1s infinite";
+    } else {
+      timerDisplay.style.background = "rgba(0,0,0,0.3)";
+      timerDisplay.style.animation = "none";
+    }
+  }
+
+  function updateStats() {
+    const total = numbersSet.length;
+    scoreDisplay.innerHTML = `✅ ${score}/${total}`;
+    const percent = Math.round((answered / total) * 100);
+    progressDisplay.innerHTML = `📊 ${percent}%`;
+  }
+
+  function generateQuestions() {
+    return generateQuestionsFromSet();
+  }
+
+  function showCurrentQuestion() {
+    if (currentQuestionIndex >= questions.length) {
+      finishQuiz();
+      return;
+    }
+    
+    const q = questions[currentQuestionIndex];
+    numberDisplay.innerHTML = q.number.toLocaleString('de-DE');
+    currentNumber = q.number;
+    currentAnswer = q.answer;
+    
+    yesButton.disabled = false;
+    noButton.disabled = false;
+    waitingForNext = false;
+  }
+
+  function finishQuiz() {
+    if (isFinished) return;
+    
+    if (nextQuestionTimeout) clearTimeout(nextQuestionTimeout);
+    
+    isActive = false;
+    isFinished = true;
+    
+    if (timerInterval) clearInterval(timerInterval);
+    
+    const percentCorrect = (score / questions.length) * 100;
+    const achieved = percentCorrect >= requiredPercent;
+    
+    questionContainer.style.display = "none";
+    startContainer.style.display = "none";
+    
+    let medalEmoji = achieved ? "🏆" : "❌";
+    let flagMessage = achieved 
+      ? `🎉 Flagge erhalten! (${difficulty} Flagge(n)) 🎉`
+      : `❌ Keine Flagge - ${requiredPercent}% waren nötig, du hast ${percentCorrect.toFixed(1)}% erreicht.`;
+    
+    const gameOverContainer = document.createElement("div");
+    gameOverContainer.style.textAlign = "center";
+    gameOverContainer.style.padding = "20px";
+    
+    gameOverContainer.innerHTML = `
+      <div style="font-size: 28px; font-weight: bold; margin-bottom: 15px;">⏰ QUIZ BEENDET! ⏰</div>
+      <div style="font-size: 24px; margin-bottom: 10px;">${medalEmoji}</div>
+      <div style="font-size: 20px; margin-bottom: 10px;">✅ Richtige Antworten: ${score}/${questions.length}</div>
+      <div style="font-size: 16px; margin-bottom: 5px;">📊 Erfolgsquote: ${percentCorrect.toFixed(1)}%</div>
+      <div style="font-size: 18px; font-weight: bold; margin-top: 15px; padding: 10px; background: rgba(255,215,0,0.3); border-radius: 10px;">
+        ${flagMessage}
+      </div>
+    `;
+    
+    while (resultContainer.firstChild) resultContainer.removeChild(resultContainer.firstChild);
+    resultContainer.appendChild(gameOverContainer);
+    resultContainer.style.background = "rgba(0,0,0,0.5)";
+    
+    // Nur wenn die erforderliche Prozentzahl erreicht wurde, wird die Aufgabe als gelöst markiert
+    if (achieved) {
+      onCorrect(achieved);
+    } else {
+      // Wenn nicht erreicht, kann die Aufgabe wiederholt werden
+      // Wir markieren sie nicht als gelöst, sondern zeigen einen Hinweis
+      const retryButton = document.createElement("button");
+      retryButton.textContent = "🔄 Quiz wiederholen";
+      retryButton.style.padding = "10px 20px";
+      retryButton.style.fontSize = "16px";
+      retryButton.style.fontWeight = "bold";
+      retryButton.style.background = "#ff9800";
+      retryButton.style.color = "white";
+      retryButton.style.border = "none";
+      retryButton.style.borderRadius = "25px";
+      retryButton.style.cursor = "pointer";
+      retryButton.style.marginTop = "15px";
+      
+      retryButton.onclick = () => {
+        // Quiz zurücksetzen und neu starten
+        isFinished = false;
+        isActive = false;
+        score = 0;
+        answered = 0;
+        timeLeft = timeLimit;
+        currentQuestionIndex = 0;
+        waitingForNext = false;
+        
+        if (nextQuestionTimeout) clearTimeout(nextQuestionTimeout);
+        if (timerInterval) clearInterval(timerInterval);
+        
+        startContainer.style.display = "flex";
+        questionContainer.style.display = "none";
+        
+        resultContainer.innerHTML = "";
+        const newResultText = document.createElement("div");
+        newResultText.style.fontSize = "16px";
+        resultContainer.appendChild(newResultText);
+        
+        updateStats();
+        updateTimerDisplay();
+      };
+      
+      gameOverContainer.appendChild(retryButton);
+    }
+  }
+
+  function handleAnswer(userChoice) {
+    if (!isActive || isFinished || waitingForNext) return;
+    
+    waitingForNext = true;
+    yesButton.disabled = true;
+    noButton.disabled = true;
+    
+    const isCorrect = (userChoice === currentAnswer);
+    
+    if (isCorrect) {
+      score++;
+      resultText.innerHTML = "✅ Richtig! ✅";
+      resultText.style.color = "#90EE90";
+    } else {
+      const answerText = currentAnswer ? "JA" : "NEIN";
+      resultText.innerHTML = `❌ Falsch! ${currentNumber.toLocaleString('de-DE')} → Richtige Antwort: ${answerText} ❌`;
+      resultText.style.color = "#ff9999";
+    }
+    
+    answered++;
+    updateStats();
+    
+    if (nextQuestionTimeout) clearTimeout(nextQuestionTimeout);
+    nextQuestionTimeout = setTimeout(() => {
+      if (!isFinished && isActive) {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+          showCurrentQuestion();
+          resultText.innerHTML = "";
+        } else {
+          finishQuiz();
+        }
+      }
+    }, 600);
+  }
+
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    
+    timerInterval = setInterval(() => {
+      if (!isActive || isFinished) return;
+      
+      if (timeLeft <= 1) {
+        clearInterval(timerInterval);
+        timeLeft = 0;
+        updateTimerDisplay();
+        finishQuiz();
+      } else {
+        timeLeft--;
+        updateTimerDisplay();
+        
+        if (timeLeft === 10) {
+          resultText.innerHTML = "⚠️ Nur noch 10 Sekunden! ⚠️";
+          resultText.style.color = "#ffcc00";
+          setTimeout(() => {
+            if (isActive && !isFinished) resultText.innerHTML = "";
+          }, 2000);
+        }
+      }
+    }, 1000);
+  }
+  
+  function startQuiz() {
+    if (isFinished) return;
+    
+    isActive = true;
+    score = 0;
+    answered = 0;
+    timeLeft = timeLimit;
+    currentQuestionIndex = 0;
+    waitingForNext = false;
+    
+    questions = generateQuestions();
+    
+    if (questions.length === 0) {
+      resultText.innerHTML = "⚠️ Keine Zahlen definiert! Bitte Aufgabenstellung prüfen.";
+      resultText.style.color = "#ffcc00";
+      return;
+    }
+    
+    updateStats();
+    updateTimerDisplay();
+    
+    startContainer.style.display = "none";
+    questionContainer.style.display = "block";
+    
+    resultContainer.innerHTML = "";
+    const newResultText = document.createElement("div");
+    newResultText.style.fontSize = "16px";
+    resultContainer.appendChild(newResultText);
+    resultText.innerHTML = "";
+    
+    showCurrentQuestion();
+    startTimer();
+  }
+  
+  yesButton.onclick = () => handleAnswer(true);
+  noButton.onclick = () => handleAnswer(false);
+  startButton.onclick = startQuiz;
+  
+  if (isFinished && savedState) {
+    startContainer.style.display = "none";
+    questionContainer.style.display = "none";
+    
+    const completedContainer = document.createElement("div");
+    completedContainer.style.textAlign = "center";
+    completedContainer.style.padding = "20px";
+    
+    const percent = (score / numbersSet.length) * 100;
+    const achieved = percent >= requiredPercent;
+    const medalEmoji = achieved ? "🏆" : "❌";
+    
+    completedContainer.innerHTML = `
+      <div style="font-size: 24px; font-weight: bold; margin-bottom: 15px;">✅ Quiz bereits abgeschlossen! ✅</div>
+      <div style="font-size: 20px; margin-bottom: 10px;">${medalEmoji}</div>
+      <div style="font-size: 18px;">✅ Richtige Antworten: ${score}/${numbersSet.length}</div>
+      <div style="font-size: 18px;">📊 Erfolgsquote: ${percent.toFixed(1)}%</div>
+      <div style="font-size: 18px;">Erforderlich: ${requiredPercent}%</div>
+      <div style="font-size: 18px; margin-top: 10px;">Erhaltene Flaggen: ${achieved ? difficulty : 0}</div>
+    `;
+    
+    while (resultContainer.firstChild) resultContainer.removeChild(resultContainer.firstChild);
+    resultContainer.appendChild(completedContainer);
+  }
+  
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  return container;
+});
+// --------------------
+// PRIME_FACTORS - Primfaktorzerlegung mit Buttons
+// Die Zahl bleibt konstant, Schüler baut die Primfaktorzerlegung auf
+// --------------------
+registerInput("prime_factors", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = document.createElement("div");
+  container.className = "prime-factors-input";
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "16px";
+  container.style.marginTop = "10px";
+  container.style.padding = "15px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "12px";
+  container.style.border = "1px solid #e0e0e0";
+
+  const targetNumber = task.number || 12;
+  const expectedFactors = task.answer || { 2: 2, 3: 1 };
+  
+  // Zustand
+  let factors = {};
+  let clickHistory = [];
+  
+  // Lade gespeicherten Zustand
+  if (initialValue && typeof initialValue === 'object') {
+    factors = initialValue.factors || {};
+    clickHistory = initialValue.clickHistory || [];
+  }
+  
+  // Primzahlen von 2 bis 11 (immer verfügbar)
+  const availablePrimes = [2, 3, 5, 7, 11];
+  
+  // ========== UI ELEMENTE ==========
+  
+  // Kopfzeile
+  const instruction = document.createElement("div");
+  instruction.style.fontSize = "16px";
+  instruction.style.fontWeight = "bold";
+  instruction.style.color = "#333";
+  instruction.style.textAlign = "center";
+  instruction.style.padding = "12px";
+  instruction.style.background = "#e8f0fe";
+  instruction.style.borderRadius = "8px";
+  instruction.style.marginBottom = "10px";
+  instruction.innerHTML = `🔢 Primfaktorzerlegung von ${targetNumber}`;
+  container.appendChild(instruction);
+  
+  // Anzeige der Zahl und der Faktoren
+  const displayContainer = document.createElement("div");
+  displayContainer.style.textAlign = "center";
+  displayContainer.style.marginBottom = "15px";
+  displayContainer.style.padding = "15px";
+  displayContainer.style.background = "white";
+  displayContainer.style.borderRadius = "10px";
+  displayContainer.style.border = "2px solid #667eea";
+  
+  const numberSpan = document.createElement("span");
+  numberSpan.style.fontSize = "36px";
+  numberSpan.style.fontWeight = "bold";
+  numberSpan.style.color = "#667eea";
+  numberSpan.innerHTML = targetNumber;
+  
+  const equalsSpan = document.createElement("span");
+  equalsSpan.style.fontSize = "24px";
+  equalsSpan.style.margin = "0 10px";
+  equalsSpan.innerHTML = "=";
+  
+  const factorsSpan = document.createElement("span");
+  factorsSpan.style.fontSize = "20px";
+  factorsSpan.style.fontFamily = "monospace";
+  factorsSpan.innerHTML = formatFactors(factors);
+  
+  displayContainer.appendChild(numberSpan);
+  displayContainer.appendChild(equalsSpan);
+  displayContainer.appendChild(factorsSpan);
+  container.appendChild(displayContainer);
+  
+  // Primzahlen Buttons (immer aktiv, immer sichtbar)
+  const buttonsContainer = document.createElement("div");
+  buttonsContainer.style.display = "flex";
+  buttonsContainer.style.flexWrap = "wrap";
+  buttonsContainer.style.gap = "15px";
+  buttonsContainer.style.justifyContent = "center";
+  buttonsContainer.style.marginBottom = "15px";
+  
+  const primeButtons = [];
+  
+  availablePrimes.forEach(prime => {
+    const btnContainer = document.createElement("div");
+    btnContainer.style.display = "flex";
+    btnContainer.style.flexDirection = "column";
+    btnContainer.style.alignItems = "center";
+    btnContainer.style.gap = "5px";
+    
+    const btn = document.createElement("button");
+    btn.textContent = prime;
+    btn.style.padding = "15px 25px";
+    btn.style.fontSize = "24px";
+    btn.style.fontWeight = "bold";
+    btn.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+    btn.style.color = "white";
+    btn.style.border = "none";
+    btn.style.borderRadius = "12px";
+    btn.style.cursor = "pointer";
+    btn.style.transition = "all 0.2s";
+    btn.style.minWidth = "70px";
+    
+    if (isSolved) {
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+      btn.style.cursor = "not-allowed";
+    }
+    
+    btn.onmouseenter = () => {
+      if (!btn.disabled) btn.style.transform = "scale(1.05)";
+    };
+    btn.onmouseleave = () => {
+      if (!btn.disabled) btn.style.transform = "scale(1)";
+    };
+    
+    btn.onclick = () => {
+      if (isSolved) return;
+      addFactor(prime);
+    };
+    
+    // Exponent Anzeige unter dem Button
+    const exponentSpan = document.createElement("span");
+    exponentSpan.style.fontSize = "14px";
+    exponentSpan.style.fontWeight = "bold";
+    exponentSpan.style.color = "#666";
+    exponentSpan.innerHTML = getExponentDisplay(prime);
+    
+    btnContainer.appendChild(btn);
+    btnContainer.appendChild(exponentSpan);
+    buttonsContainer.appendChild(btnContainer);
+    
+    primeButtons.push({ btn, prime, exponentSpan });
+  });
+  
+  container.appendChild(buttonsContainer);
+  
+  // Aktions-Buttons
+  const actionContainer = document.createElement("div");
+  actionContainer.style.display = "flex";
+  actionContainer.style.gap = "10px";
+  actionContainer.style.justifyContent = "center";
+  actionContainer.style.marginTop = "10px";
+  
+  const clearButton = document.createElement("button");
+  clearButton.textContent = "🗑️ Alles löschen";
+  clearButton.style.padding = "10px 20px";
+  clearButton.style.fontSize = "14px";
+  clearButton.style.background = "#ff9800";
+  clearButton.style.color = "white";
+  clearButton.style.border = "none";
+  clearButton.style.borderRadius = "8px";
+  clearButton.style.cursor = "pointer";
+  clearButton.disabled = isSolved;
+  
+  clearButton.onclick = () => {
+    if (isSolved) return;
+    resetFactors();
+  };
+  
+  const undoButton = document.createElement("button");
+  undoButton.textContent = "↩️ Rückgängig";
+  undoButton.style.padding = "10px 20px";
+  undoButton.style.fontSize = "14px";
+  undoButton.style.background = "#2196f3";
+  undoButton.style.color = "white";
+  undoButton.style.border = "none";
+  undoButton.style.borderRadius = "8px";
+  undoButton.style.cursor = "pointer";
+  undoButton.disabled = isSolved || clickHistory.length === 0;
+  
+  undoButton.onclick = () => {
+    if (isSolved || clickHistory.length === 0) return;
+    undoLastFactor();
+  };
+  
+  actionContainer.appendChild(undoButton);
+  actionContainer.appendChild(clearButton);
+  container.appendChild(actionContainer);
+  
+  // Feedback und Prüfbutton
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "13px";
+  feedbackDiv.style.textAlign = "center";
+  feedbackDiv.style.padding = "8px";
+  feedbackDiv.style.borderRadius = "8px";
+  feedbackDiv.style.marginTop = "10px";
+  
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Primfaktorzerlegung prüfen";
+  checkButton.style.padding = "12px 24px";
+  checkButton.style.fontSize = "16px";
+  checkButton.style.fontWeight = "bold";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "25px";
+  checkButton.style.marginTop = "15px";
+  checkButton.style.width = "100%";
+  checkButton.disabled = isSolved;
+  
+  if (isSolved) {
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+  }
+  
+  container.appendChild(checkButton);
+  container.appendChild(feedbackDiv);
+  
+  // ============================================
+  // HILFSFUNKTIONEN
+  // ============================================
+  
+  function getExponentDisplay(prime) {
+    const exp = factors[prime] || 0;
+    if (exp === 0) return "";
+    if (exp === 1) return `${prime}¹`;
+    return `${prime}${'²³⁴⁵⁶⁷⁸⁹'[exp-1] || '^' + exp}`;
+  }
+  
+  function updateExponentDisplays() {
+    primeButtons.forEach(({ prime, exponentSpan }) => {
+      exponentSpan.innerHTML = getExponentDisplay(prime);
+    });
+  }
+  
+  function formatFactors(factorsObj) {
+    const entries = Object.entries(factorsObj).filter(([_, exp]) => exp > 0);
+    if (entries.length === 0) return "";
+    
+    return entries.map(([prime, exp]) => {
+      if (exp === 1) return prime;
+      const exponentChar = getExponentChar(exp);
+      return `${prime}${exponentChar}`;
+    }).join(" × ");
+  }
+  
+  function getExponentChar(exp) {
+    const exponents = { 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+    return exponents[exp] || `^${exp}`;
+  }
+  
+  function updateDisplay() {
+    factorsSpan.innerHTML = formatFactors(factors);
+    updateExponentDisplays();
+    undoButton.disabled = isSolved || clickHistory.length === 0;
+  }
+  
+  function addFactor(prime) {
+    if (isSolved) return;
+    
+    // Speichere für Undo
+    clickHistory.push({ prime, action: 'add' });
+    
+    // Erhöhe Exponent
+    factors[prime] = (factors[prime] || 0) + 1;
+    
+    // Visuelles Feedback
+    const btnInfo = primeButtons.find(p => p.prime === prime);
+    if (btnInfo) {
+      btnInfo.btn.style.transform = "scale(0.95)";
+      setTimeout(() => {
+        btnInfo.btn.style.transform = "scale(1)";
+      }, 100);
+    }
+    
+    updateDisplay();
+    
+    // Nur Warnung wenn Produkt zu groß wird
+    const product = calculateProduct();
+    if (product > targetNumber) {
+      feedbackDiv.innerHTML = `⚠️ Das Produkt (${product}) ist bereits größer als ${targetNumber}!`;
+      feedbackDiv.style.background = "#fff3e0";
+      feedbackDiv.style.color = "#ff9800";
+    } else {
+      feedbackDiv.innerHTML = "";
+      feedbackDiv.style.background = "";
+    }
+  }
+  
+  function undoLastFactor() {
+    if (isSolved || clickHistory.length === 0) return;
+    
+    const last = clickHistory.pop();
+    if (last.action === 'add') {
+      const prime = last.prime;
+      factors[prime]--;
+      if (factors[prime] === 0) {
+        delete factors[prime];
+      }
+    }
+    
+    updateDisplay();
+    feedbackDiv.innerHTML = "";
+    feedbackDiv.style.background = "";
+  }
+  
+  function resetFactors() {
+    factors = {};
+    clickHistory = [];
+    updateDisplay();
+    feedbackDiv.innerHTML = "";
+    feedbackDiv.style.background = "";
+  }
+  
+  function calculateProduct() {
+    let product = 1;
+    for (const [prime, exp] of Object.entries(factors)) {
+      product *= Math.pow(parseInt(prime), exp);
+    }
+    return product;
+  }
+  
+  function compareFactors(factors1, factors2) {
+    const keys1 = Object.keys(factors1).sort();
+    const keys2 = Object.keys(factors2).sort();
+    
+    if (keys1.length !== keys2.length) return false;
+    
+    for (const key of keys1) {
+      if ((factors1[key] || 0) !== (factors2[key] || 0)) return false;
+    }
+    return true;
+  }
+  
+  function checkFactors() {
+    if (isSolved) return;
+    
+    const product = calculateProduct();
+    const isProductCorrect = (product === targetNumber);
+    const isFactorsCorrect = compareFactors(factors, expectedFactors);
+    
+    if (isProductCorrect && isFactorsCorrect) {
+      feedbackDiv.innerHTML = "✅ Richtig! Die Primfaktorzerlegung ist korrekt! 🎉";
+      feedbackDiv.style.background = "#e8f5e9";
+      feedbackDiv.style.color = "#2e7d32";
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
+      
+      // Buttons deaktivieren
+      primeButtons.forEach(({ btn }) => {
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+        btn.style.cursor = "not-allowed";
+      });
+      undoButton.disabled = true;
+      clearButton.disabled = true;
+      
+      const result = {
+        number: targetNumber,
+        factors: factors,
+        clickHistory: clickHistory
+      };
+      onCorrect(result);
+    } else if (product !== targetNumber) {
+      feedbackDiv.innerHTML = `❌ Das Produkt (${product}) ist nicht gleich ${targetNumber}. Überprüfe deine Faktoren!`;
+      feedbackDiv.style.background = "#ffebee";
+      feedbackDiv.style.color = "#c62828";
+    } else {
+      feedbackDiv.innerHTML = "❌ Falsche Primfaktorzerlegung! Versuche es noch einmal.";
+      feedbackDiv.style.background = "#ffebee";
+      feedbackDiv.style.color = "#c62828";
+    }
+  }
+  
+  checkButton.onclick = checkFactors;
+  
+  return container;
+});
+// --------------------
 // TEXT - Für Textantworten - MIT PRÜFBUTTON
 // --------------------
 registerInput("text", ({ task, onCorrect, initialValue, isSolved }) => {
@@ -2999,7 +5271,8 @@ registerInput("text", ({ task, onCorrect, initialValue, isSolved }) => {
   
   const input = document.createElement("input");
   input.type = "text";
-  input.placeholder = "Antwort eingeben...";
+  // Unterstützt jetzt task.placeholder, falls vorhanden
+  input.placeholder = task.placeholder || "Antwort eingeben...";
   input.style.width = "100%";
   input.style.padding = "8px";
   input.style.borderRadius = "4px";
