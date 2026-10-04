@@ -52,50 +52,42 @@ const levels = [
     ]
   },
 
-  // Aufgabe 2: Produkte und Quotienten
+  // Aufgabe 2: Terme zuordnen
   {
     id: "tg8_task2",
-    title: "Produkte und Quotienten",
+    title: "Terme zuordnen",
     tasks: [
       {
         id: "tg8_task2_a",
-        question: "a) \\(3\\cdot 4x\\)",
-        type: "term",
-        answer: "12x",
-        form: "simplified",
-        difficulty: 1
-      },
-      {
-        id: "tg8_task2_b",
-        question: "b) \\(2a\\cdot 5b\\)",
-        type: "term",
-        answer: "10ab",
-        form: "simplified",
-        difficulty: 1
-      },
-      {
-        id: "tg8_task2_c",
-        question: "c) \\(x\\cdot x\\)",
-        type: "term",
-        answer: "x^2",
-        form: "simplified",
-        difficulty: 1
-      },
-      {
-        id: "tg8_task2_d",
-        question: "d) \\((-3x)\\cdot 2x\\)",
-        type: "term",
-        answer: "-6x^2",
-        form: "simplified",
+        question: "Verbinde jeden Term mit dem gleichwertigen Term.",
+        type: "zuordnen",
+        pairs: [
+          {
+            "left": "\\(3\\cdot 4x\\)",
+            "right": "\\(12x\\)"
+          },
+          {
+            "left": "\\(2a\\cdot 5b\\)",
+            "right": "\\(10ab\\)"
+          },
+          {
+            "left": "\\(x\\cdot x\\)",
+            "right": "\\(x^2\\)"
+          },
+          {
+            "left": "\\((-3x)\\cdot 2x\\)",
+            "right": "\\(-6x^2\\)"
+          },
+          {
+            "left": "\\(12x:4\\)",
+            "right": "\\(3x\\)"
+          },
+          {
+            "left": "\\(x+x\\)",
+            "right": "\\(2x\\)"
+          }
+        ],
         difficulty: 2
-      },
-      {
-        id: "tg8_task2_e",
-        question: "e) \\(12x:4\\)",
-        type: "term",
-        answer: "3x",
-        form: "simplified",
-        difficulty: 1
       }
     ]
   },
@@ -340,34 +332,58 @@ const levels = [
     ]
   },
 
-  // Aufgabe 8: Lösung durch Einsetzen finden
+  // Aufgabe 8: Termmauern
   {
     id: "tg8_task8",
-    title: "Lösung durch Einsetzen finden",
+    title: "Termmauern",
     tasks: [
       {
         id: "tg8_task8_a",
+        question: "a) Fülle die Termmauer aus.",
+        type: "term_wall",
+        rows: [[null], [null, null], ["3x", "x+2", "2x-1"]],
+        answer: [["7x+3"], ["4x+2", "3x+1"], ["3x", "x+2", "2x-1"]],
+        difficulty: 2
+      },
+      {
+        id: "tg8_task8_b",
+        question: "b) Fülle die Termmauer aus.",
+        type: "term_wall",
+        rows: [[null], ["5a+1", null], ["2a", null, "a-3"]],
+        answer: [["9a-1"], ["5a+1", "4a-2"], ["2a", "3a+1", "a-3"]],
+        difficulty: 3
+      }
+    ]
+  },
+
+  // Aufgabe 9: Lösung durch Einsetzen finden
+  {
+    id: "tg8_task9",
+    title: "Lösung durch Einsetzen finden",
+    tasks: [
+      {
+        id: "tg8_task9_a",
         question: "a) \\(3x+4=19\\)",
         type: "scalar",
         answer: 5,
         difficulty: 1
       },
       {
-        id: "tg8_task8_b",
+        id: "tg8_task9_b",
         question: "b) \\(2x-7=x+1\\)",
         type: "scalar",
         answer: 8,
         difficulty: 1
       },
       {
-        id: "tg8_task8_c",
+        id: "tg8_task9_c",
         question: "c) \\(x^2=4x-4\\)",
         type: "scalar",
         answer: 2,
         difficulty: 2
       },
       {
-        id: "tg8_task8_d",
+        id: "tg8_task9_d",
         question: "d) \\(\\frac{x}{2}+3=2x-6\\)",
         type: "scalar",
         answer: 6,
@@ -376,41 +392,41 @@ const levels = [
     ]
   },
 
-  // Aufgabe 9: Äquivalenzumformungen erkennen
+  // Aufgabe 10: Äquivalenzumformungen erkennen
   {
-    id: "tg8_task9",
+    id: "tg8_task10",
     title: "Äquivalenzumformungen erkennen",
     tasks: [
       {
-        id: "tg8_task9_a",
+        id: "tg8_task10_a",
         question: "a) \\(x+7=12 \\;\\Rightarrow\\; x=5\\)",
         type: "umformung",
         answer: "-7",
         difficulty: 1
       },
       {
-        id: "tg8_task9_b",
+        id: "tg8_task10_b",
         question: "b) \\(4x=28 \\;\\Rightarrow\\; x=7\\)",
         type: "umformung",
         answer: ":4",
         difficulty: 1
       },
       {
-        id: "tg8_task9_c",
+        id: "tg8_task10_c",
         question: "c) \\(\\frac{x}{5}=3 \\;\\Rightarrow\\; x=15\\)",
         type: "umformung",
         answer: "*5",
         difficulty: 1
       },
       {
-        id: "tg8_task9_d",
+        id: "tg8_task10_d",
         question: "d) \\(3x+8=20 \\;\\Rightarrow\\; 3x=12\\)",
         type: "umformung",
         answer: "-8",
         difficulty: 1
       },
       {
-        id: "tg8_task9_e",
+        id: "tg8_task10_e",
         question: "e) \\(5x=2x+9 \\;\\Rightarrow\\; 3x=9\\)",
         type: "umformung",
         answer: "-2x",
@@ -419,77 +435,70 @@ const levels = [
     ]
   },
 
-  // Aufgabe 10: Äquivalenzumformungen durchführen
+  // Aufgabe 11: Gleichungen an der Waage
   {
-    id: "tg8_task10",
-    title: "Äquivalenzumformungen durchführen",
+    id: "tg8_task11",
+    title: "Gleichungen an der Waage",
     tasks: [
       {
-        id: "tg8_task10_a",
-        question: "a) \\(2x+9=23 \\quad |\\,-9\\) ergibt \\(2x=\\square\\)",
-        type: "scalar",
-        answer: 14,
+        id: "tg8_task11_a",
+        question: "a) \\(2x+3=11\\)",
+        type: "waage",
+        equation: {"a": 2, "b": 3, "c": 0, "d": 11},
         difficulty: 1
       },
       {
-        id: "tg8_task10_b",
-        question: "b) \\(\\frac{x}{4}=-6 \\quad |\\,\\cdot 4\\) ergibt \\(x=\\square\\)",
-        type: "scalar",
-        answer: -24,
+        id: "tg8_task11_b",
+        question: "b) \\(3x+2=x+8\\)",
+        type: "waage",
+        equation: {"a": 3, "b": 2, "c": 1, "d": 8},
         difficulty: 1
       },
       {
-        id: "tg8_task10_c",
-        question: "c) \\(7x-4=3x+20 \\quad |\\,-3x\\) ergibt \\(\\square\\cdot x-4=20\\)",
-        type: "scalar",
-        answer: 4,
-        difficulty: 1
-      },
-      {
-        id: "tg8_task10_d",
-        question: "d) \\(5x+6=2x-9 \\quad |\\,-6\\) ergibt \\(5x=2x+\\square\\)",
-        type: "scalar",
-        answer: -15,
+        id: "tg8_task11_c",
+        question: "c) \\(5x+4=3x+14\\)",
+        type: "waage",
+        equation: {"a": 5, "b": 4, "c": 3, "d": 14},
         difficulty: 2
       }
     ]
   },
 
-  // Aufgabe 11: Einfache Gleichungen
+  // Aufgabe 12: Einfache Gleichungen
   {
-    id: "tg8_task11",
+    id: "tg8_task12",
     title: "Einfache Gleichungen",
     tasks: [
       {
-        id: "tg8_task11_a",
+        id: "tg8_task12_a",
         question: "a) \\(6x=-42\\)",
         type: "scalar",
         answer: -7,
         difficulty: 1
       },
       {
-        id: "tg8_task11_b",
+        id: "tg8_task12_b",
         question: "b) \\(3x+5=26\\)",
         type: "scalar",
         answer: 7,
         difficulty: 1
       },
       {
-        id: "tg8_task11_c",
+        id: "tg8_task12_c",
         question: "c) \\(4x-9=15\\)",
         type: "scalar",
         answer: 6,
         difficulty: 1
       },
       {
-        id: "tg8_task11_d",
+        id: "tg8_task12_d",
         question: "d) \\(\\frac{x}{3}-2=4\\)",
         type: "scalar",
         answer: 18,
         difficulty: 1
       },
       {
-        id: "tg8_task11_e",
+        id: "tg8_task12_e",
         question: "e) \\(12-2x=4\\)",
         type: "scalar",
         answer: 4,
@@ -498,41 +507,41 @@ const levels = [
     ]
   },
 
-  // Aufgabe 12: Gleichungen mit x auf beiden Seiten
+  // Aufgabe 13: Gleichungen mit x auf beiden Seiten
   {
-    id: "tg8_task12",
+    id: "tg8_task13",
     title: "Gleichungen mit x auf beiden Seiten",
     tasks: [
       {
-        id: "tg8_task12_a",
+        id: "tg8_task13_a",
         question: "a) \\(5x+3=2x+18\\)",
         type: "scalar",
         answer: 5,
         difficulty: 2
       },
       {
-        id: "tg8_task12_b",
+        id: "tg8_task13_b",
         question: "b) \\(4x+10=9x-5\\)",
         type: "scalar",
         answer: 3,
         difficulty: 2
       },
       {
-        id: "tg8_task12_c",
+        id: "tg8_task13_c",
         question: "c) \\(2x-7=5x+8\\)",
         type: "scalar",
         answer: -5,
         difficulty: 2
       },
       {
-        id: "tg8_task12_d",
+        id: "tg8_task13_d",
         question: "d) \\(9-x=3x-19\\)",
         type: "scalar",
         answer: 7,
         difficulty: 2
       },
       {
-        id: "tg8_task12_e",
+        id: "tg8_task13_e",
         question: "e) \\(8x+1=3x+3\\)",
         type: "term",
         answer: "2/5",
@@ -542,41 +551,41 @@ const levels = [
     ]
   },
 
-  // Aufgabe 13: Gleichungen mit Klammern
+  // Aufgabe 14: Gleichungen mit Klammern
   {
-    id: "tg8_task13",
+    id: "tg8_task14",
     title: "Gleichungen mit Klammern",
     tasks: [
       {
-        id: "tg8_task13_a",
+        id: "tg8_task14_a",
         question: "a) \\(2(x-5)=x+4\\)",
         type: "scalar",
         answer: 14,
         difficulty: 2
       },
       {
-        id: "tg8_task13_b",
+        id: "tg8_task14_b",
         question: "b) \\(5(x-1)=3(x+5)\\)",
         type: "scalar",
         answer: 10,
         difficulty: 2
       },
       {
-        id: "tg8_task13_c",
+        id: "tg8_task14_c",
         question: "c) \\(4(2x-3)-2x=3(x+4)\\)",
         type: "scalar",
         answer: 8,
         difficulty: 3
       },
       {
-        id: "tg8_task13_d",
+        id: "tg8_task14_d",
         question: "d) \\(7-(3x-5)=2(x+1)\\)",
         type: "scalar",
         answer: 2,
         difficulty: 3
       },
       {
-        id: "tg8_task13_e",
+        id: "tg8_task14_e",
         question: "e) \\((x+3)(x-2)=x^2+6\\)",
         type: "scalar",
         answer: 12,
@@ -585,13 +594,101 @@ const levels = [
     ]
   },
 
-  // Aufgabe 14: Terme aufstellen
+  // Aufgabe 15: Lösungsweg ordnen
   {
-    id: "tg8_task14",
+    id: "tg8_task15",
+    title: "Lösungsweg ordnen",
+    tasks: [
+      {
+        id: "tg8_task15_a",
+        question: "a) \\(4(x-2)+3=2x+7\\)",
+        type: "schritte",
+        steps: [
+          "\\(4(x-2)+3=2x+7\\)",
+          "\\(4x-8+3=2x+7\\)",
+          "\\(4x-5=2x+7 \\quad |\\,-2x\\)",
+          "\\(2x-5=7 \\quad |\\,+5\\)",
+          "\\(2x=12 \\quad |\\,:2\\)",
+          "\\(x=6\\)"
+        ],
+        difficulty: 2
+      },
+      {
+        id: "tg8_task15_b",
+        question: "b) \\(3(2x+1)-(x-5)=2(x+7)\\)",
+        type: "schritte",
+        steps: [
+          "\\(3(2x+1)-(x-5)=2(x+7)\\)",
+          "\\(6x+3-x+5=2x+14\\)",
+          "\\(5x+8=2x+14 \\quad |\\,-2x\\)",
+          "\\(3x+8=14 \\quad |\\,-8\\)",
+          "\\(3x=6 \\quad |\\,:3\\)",
+          "\\(x=2\\)"
+        ],
+        difficulty: 3
+      }
+    ]
+  },
+
+  // Aufgabe 16: Fehlersuche
+  {
+    id: "tg8_task16",
+    title: "Fehlersuche",
+    tasks: [
+      {
+        id: "tg8_task16_a",
+        question: "a) \\(5x-3=2x+9\\)",
+        type: "fehlersuche",
+        lines: [
+          "\\(5x-3=2x+9 \\quad |\\,-2x\\)",
+          "\\(3x-3=9 \\quad |\\,+3\\)",
+          "\\(3x=6 \\quad |\\,:3\\)",
+          "\\(x=2\\)"
+        ],
+        errorLine: 2,
+        answer: 4,
+        difficulty: 2
+      },
+      {
+        id: "tg8_task16_b",
+        question: "b) \\(2(x+4)=18\\)",
+        type: "fehlersuche",
+        lines: [
+          "\\(2(x+4)=18\\)",
+          "\\(2x+4=18 \\quad |\\,-4\\)",
+          "\\(2x=14 \\quad |\\,:2\\)",
+          "\\(x=7\\)"
+        ],
+        errorLine: 1,
+        answer: 5,
+        difficulty: 2
+      },
+      {
+        id: "tg8_task16_c",
+        question: "c) \\(7-(2x-3)=x+1\\)",
+        type: "fehlersuche",
+        lines: [
+          "\\(7-(2x-3)=x+1\\)",
+          "\\(7-2x-3=x+1\\)",
+          "\\(4-2x=x+1 \\quad |\\,-x\\)",
+          "\\(4-3x=1 \\quad |\\,-4\\)",
+          "\\(-3x=-3 \\quad |\\,:(-3)\\)",
+          "\\(x=1\\)"
+        ],
+        errorLine: 1,
+        answer: 3,
+        difficulty: 3
+      }
+    ]
+  },
+
+  // Aufgabe 17: Terme aufstellen
+  {
+    id: "tg8_task17",
     title: "Terme aufstellen",
     tasks: [
       {
-        id: "tg8_task14_a",
+        id: "tg8_task17_a",
         question: "a) Term für den Umfang",
         type: "term",
         answer: "4x+6",
@@ -599,7 +696,7 @@ const levels = [
         difficulty: 2
       },
       {
-        id: "tg8_task14_b",
+        id: "tg8_task17_b",
         question: "b) Term für die Gesamtkosten",
         type: "term",
         answer: "9n+4",
@@ -607,7 +704,7 @@ const levels = [
         difficulty: 2
       },
       {
-        id: "tg8_task14_c",
+        id: "tg8_task17_c",
         question: "c) Term für das Gesamtalter",
         type: "term",
         answer: "5x-3",
@@ -615,7 +712,7 @@ const levels = [
         difficulty: 2
       },
       {
-        id: "tg8_task14_d",
+        id: "tg8_task17_d",
         question: "d) Term für den Flächeninhalt",
         type: "term",
         answer: "2x^2+10x",
@@ -625,48 +722,48 @@ const levels = [
     ]
   },
 
-  // Aufgabe 15: Sachaufgaben
+  // Aufgabe 18: Sachaufgaben
   {
-    id: "tg8_task15",
+    id: "tg8_task18",
     title: "Sachaufgaben",
     tasks: [
       {
-        id: "tg8_task15_a",
+        id: "tg8_task18_a",
         question: "a) Gesuchte Zahl",
         type: "scalar",
         answer: 9,
         difficulty: 2
       },
       {
-        id: "tg8_task15_b",
+        id: "tg8_task18_b",
         question: "b) Kleinste Zahl",
         type: "scalar",
         answer: 27,
         difficulty: 2
       },
       {
-        id: "tg8_task15_c",
+        id: "tg8_task18_c",
         question: "c) Breite in cm",
         type: "scalar",
         answer: 10,
         difficulty: 2
       },
       {
-        id: "tg8_task15_d",
+        id: "tg8_task18_d",
         question: "d) Anzahl der Monate",
         type: "scalar",
         answer: 6,
         difficulty: 3
       },
       {
-        id: "tg8_task15_e",
+        id: "tg8_task18_e",
         question: "e) Mias Alter in Jahren",
         type: "scalar",
         answer: 8,
         difficulty: 3
       },
       {
-        id: "tg8_task15_f",
+        id: "tg8_task18_f",
         question: "f) Jonas Flaggen",
         type: "scalar",
         answer: 25,

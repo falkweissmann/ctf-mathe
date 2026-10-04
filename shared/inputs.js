@@ -5706,3 +5706,734 @@ registerInput("umformung", ({ task, onCorrect, initialValue, isSolved }) => {
 
   return createCTFTermField({ task, onCorrect, initialValue, isSolved, placeholder: "z.B. +4 oder :3", check });
 });
+
+
+// ============================================================
+// INTERAKTIVE AUFGABENTYPEN (alle per Tippen bedienbar, auch auf Tablets)
+//   zuordnen     - Kartenpaare verbinden
+//   term_wall    - Termmauer ausfüllen
+//   waage        - Gleichung an der Waage lösen
+//   schritte     - Lösungsschritte in die richtige Reihenfolge bringen
+//   fehlersuche  - fehlerhafte Zeile finden und richtig lösen
+// ============================================================
+const CTFUI = {
+  math(el) {
+    const run = () => {
+      if (typeof renderMathInElement === "undefined") return false;
+      renderMathInElement(el, {
+        delimiters: [
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true }
+        ],
+        throwOnError: false
+      });
+      return true;
+    };
+    if (!run()) setTimeout(run, 700);
+  },
+
+  box() {
+    const container = document.createElement("div");
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.gap = "12px";
+    container.style.marginTop = "10px";
+    container.style.padding = "14px";
+    container.style.background = "#f9f9f9";
+    container.style.borderRadius = "12px";
+    container.style.border = "1px solid #e0e0e0";
+    container.style.width = "min(660px, 82vw)";
+    container.style.textAlign = "left";
+    container.style.boxSizing = "border-box";
+    return container;
+  },
+
+  hint(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    div.style.fontSize = "14px";
+    div.style.fontWeight = "bold";
+    div.style.color = "#333";
+    div.style.textAlign = "center";
+    div.style.padding = "8px";
+    div.style.background = "#e8f0fe";
+    div.style.borderRadius = "8px";
+    return div;
+  },
+
+  button(label, color) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = label;
+    btn.style.padding = "8px 16px";
+    btn.style.fontSize = "14px";
+    btn.style.fontWeight = "bold";
+    btn.style.cursor = "pointer";
+    btn.style.background = color || "#667eea";
+    btn.style.color = "white";
+    btn.style.border = "none";
+    btn.style.borderRadius = "20px";
+    return btn;
+  },
+
+  feedback() {
+    const el = document.createElement("div");
+    el.style.fontSize = "13px";
+    el.style.padding = "6px";
+    el.style.borderRadius = "6px";
+    el.style.textAlign = "center";
+    el.style.minHeight = "18px";
+    const styles = {
+      ok: ["#e8f5e9", "#2e7d32"],
+      wrong: ["#ffebee", "#c62828"],
+      info: ["#fff3e0", "#e65100"]
+    };
+    return {
+      el,
+      show(text, kind) {
+        el.textContent = text;
+        el.style.background = text ? styles[kind][0] : "";
+        el.style.color = text ? styles[kind][1] : "";
+      }
+    };
+  },
+
+  // Mischt immer gleich (abhängig vom Schlüssel) und nie in der Ausgangsreihenfolge
+  shuffle(count, key) {
+    let seed = 7;
+    for (const ch of String(key)) seed = (seed * 31 + ch.charCodeAt(0)) % 2147483647;
+    const next = () => (seed = (seed * 48271) % 2147483647) / 2147483647;
+    const order = [...Array(count).keys()];
+    for (let attempt = 0; attempt < 20; attempt++) {
+      for (let i = count - 1; i > 0; i--) {
+        const j = Math.floor(next() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      if (count < 2 || order.some((v, i) => v !== i)) break;
+    }
+    return order;
+  },
+
+  solvedButton(btn) {
+    btn.disabled = true;
+    btn.style.background = "#4caf50";
+    btn.textContent = "✓ Gelöst";
+  }
+};
+
+// --------------------
+// ZUORDNEN - links antippen, dann den passenden Partner rechts antippen
+//   pairs: [{ left: "\\(3\\cdot 4x\\)", right: "\\(12x\\)" }, ...]
+// --------------------
+registerInput("zuordnen", ({ task, onCorrect, isSolved }) => {
+  const container = CTFUI.box();
+  const pairs = task.pairs;
+  const colors = ["#667eea", "#ff9800", "#009688", "#e91e63", "#795548", "#3f51b5", "#8bc34a", "#9c27b0"];
+  const rightOrder = isSolved ? pairs.map((_, i) => i) : CTFUI.shuffle(pairs.length, task.id);
+  const assigned = {}; // linker Index -> rechter Index
+  let selected = null;
+  let done = isSolved;
+  if (isSolved) pairs.forEach((_, i) => (assigned[i] = i));
+
+  container.appendChild(CTFUI.hint(task.instruction || "👆 Tippe links eine Karte an und danach rechts die passende Karte."));
+
+  const grid = document.createElement("div");
+  grid.style.display = "grid";
+  grid.style.gridTemplateColumns = "1fr 1fr";
+  grid.style.gap = "8px 20px";
+  container.appendChild(grid);
+
+  const feedback = CTFUI.feedback();
+  const checkButton = CTFUI.button("✓ Prüfen");
+  checkButton.style.alignSelf = "flex-end";
+
+  const card = (html) => {
+    const el = document.createElement("button");
+    el.type = "button";
+    el.innerHTML = html;
+    el.style.padding = "10px";
+    el.style.minHeight = "44px";
+    el.style.fontSize = "16px";
+    el.style.background = "white";
+    el.style.border = "3px solid #d0d0d0";
+    el.style.borderRadius = "10px";
+    el.style.cursor = done ? "default" : "pointer";
+    el.style.color = "#222";
+    return el;
+  };
+
+  const render = () => {
+    grid.innerHTML = "";
+    pairs.forEach((pair, row) => {
+      const leftCard = card(pair.left);
+      const color = colors[row % colors.length];
+      if (assigned[row] !== undefined) leftCard.style.borderColor = color;
+      if (selected === row) {
+        leftCard.style.background = "#e8f0fe";
+        leftCard.style.borderColor = color;
+        leftCard.style.borderStyle = "dashed";
+      }
+      leftCard.onclick = () => {
+        if (done) return;
+        if (assigned[row] !== undefined) delete assigned[row];
+        selected = selected === row ? null : row;
+        render();
+      };
+
+      const rightIndex = rightOrder[row];
+      const rightCard = card(pairs[rightIndex].right);
+      const owner = Object.keys(assigned).find((l) => assigned[l] === rightIndex);
+      if (owner !== undefined) {
+        rightCard.style.borderColor = colors[owner % colors.length];
+        rightCard.style.background = "#fafafa";
+      }
+      rightCard.onclick = () => {
+        if (done) return;
+        if (owner !== undefined) {
+          delete assigned[owner];
+        } else if (selected !== null) {
+          assigned[selected] = rightIndex;
+          selected = null;
+        } else {
+          feedback.show("Tippe zuerst links eine Karte an.", "info");
+        }
+        render();
+      };
+
+      grid.appendChild(leftCard);
+      grid.appendChild(rightCard);
+    });
+    CTFUI.math(grid);
+  };
+
+  checkButton.onclick = () => {
+    if (done) return;
+    if (Object.keys(assigned).length < pairs.length) {
+      feedback.show("⚠️ Es sind noch nicht alle Karten verbunden.", "info");
+      return;
+    }
+    const correct = pairs.filter((pair, l) => pairs[assigned[l]].right === pair.right).length;
+    if (correct === pairs.length) {
+      done = true;
+      CTFUI.solvedButton(checkButton);
+      feedback.show("✅ Richtig! 🎉", "ok");
+      render();
+      onCorrect("zugeordnet");
+    } else {
+      feedback.show(`❌ ${correct} von ${pairs.length} Paaren stimmen. Tippe ein Paar an, um es zu lösen.`, "wrong");
+    }
+  };
+
+  if (isSolved) CTFUI.solvedButton(checkButton);
+  render();
+  container.appendChild(checkButton);
+  container.appendChild(feedback.el);
+  return container;
+});
+
+// --------------------
+// TERM_WALL - Termmauer: jeder Stein ist die Summe der beiden Steine darunter
+//   rows:   von oben nach unten, null = Eingabefeld, z.B. [[null], [null, null], ["3x", "x+2", "2x-1"]]
+//   answer: dieselbe Form mit allen Lösungen
+// --------------------
+registerInput("term_wall", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = CTFUI.box();
+  container.appendChild(CTFUI.hint(task.instruction || "🧱 Jeder Stein ist die Summe der beiden Steine direkt darunter."));
+
+  const wall = document.createElement("div");
+  wall.style.display = "flex";
+  wall.style.flexDirection = "column";
+  wall.style.alignItems = "center";
+  wall.style.gap = "4px";
+  container.appendChild(wall);
+
+  let saved = null;
+  try { saved = isSolved && initialValue ? JSON.parse(initialValue) : null; } catch (e) { saved = null; }
+
+  const inputs = [];
+  task.rows.forEach((row, r) => {
+    const line = document.createElement("div");
+    line.style.display = "flex";
+    line.style.gap = "4px";
+    row.forEach((cell, c) => {
+      const brick = document.createElement("div");
+      brick.style.width = "min(150px, 24vw)";
+      brick.style.height = "46px";
+      brick.style.display = "flex";
+      brick.style.alignItems = "center";
+      brick.style.justifyContent = "center";
+      brick.style.background = cell === null ? "#fff8e1" : "#ffcc80";
+      brick.style.border = "2px solid #bf7b30";
+      brick.style.borderRadius = "6px";
+      brick.style.fontSize = "16px";
+      if (cell === null) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.autocomplete = "off";
+        input.autocapitalize = "off";
+        input.spellcheck = false;
+        input.placeholder = "?";
+        input.style.width = "90%";
+        input.style.padding = "6px 2px";
+        input.style.fontSize = "16px";
+        input.style.textAlign = "center";
+        input.style.border = "1px solid #ccc";
+        input.style.borderRadius = "4px";
+        if (isSolved) {
+          input.value = saved && saved[r] && saved[r][c] ? saved[r][c] : task.answer[r][c];
+          input.disabled = true;
+        }
+        inputs.push({ input, r, c });
+        brick.appendChild(input);
+      } else {
+        brick.innerHTML = "\\(" + cell + "\\)";
+      }
+      line.appendChild(brick);
+    });
+    wall.appendChild(line);
+  });
+  CTFUI.math(wall);
+
+  const feedback = CTFUI.feedback();
+  const checkButton = CTFUI.button("✓ Prüfen");
+  checkButton.style.alignSelf = "flex-end";
+  if (isSolved) CTFUI.solvedButton(checkButton);
+
+  const validate = () => {
+    if (checkButton.disabled) return;
+    if (inputs.some(({ input }) => input.value.trim() === "")) {
+      feedback.show("⚠️ Fülle zuerst alle Steine aus.", "info");
+      return;
+    }
+    let wrong = 0, notSimplified = 0;
+    inputs.forEach(({ input, r, c }) => {
+      const expected = task.answer[r][c];
+      const value = input.value.trim();
+      input.classList.remove("correct", "wrong");
+      if (!CTFTerm.parse(value) || !CTFTerm.equivalent(value, expected)) {
+        wrong++;
+        input.classList.add("wrong");
+      } else if (!CTFTerm.isSimplified(value, expected)) {
+        notSimplified++;
+        input.classList.add("wrong");
+      } else {
+        input.classList.add("correct");
+      }
+    });
+    if (wrong === 0 && notSimplified === 0) {
+      inputs.forEach(({ input }) => (input.disabled = true));
+      CTFUI.solvedButton(checkButton);
+      feedback.show("✅ Richtig! 🎉", "ok");
+      const values = task.rows.map((row) => row.map(() => null));
+      inputs.forEach(({ input, r, c }) => (values[r][c] = input.value.trim()));
+      onCorrect(JSON.stringify(values));
+    } else if (wrong === 0) {
+      feedback.show("🔎 Die roten Steine stimmen, sind aber noch nicht vollständig vereinfacht.", "info");
+    } else {
+      feedback.show("❌ Die roten Steine stimmen noch nicht.", "wrong");
+    }
+  };
+  checkButton.onclick = validate;
+  inputs.forEach(({ input }) => input.addEventListener("keypress", (e) => { if (e.key === "Enter") validate(); }));
+
+  container.appendChild(checkButton);
+  container.appendChild(feedback.el);
+  return container;
+});
+
+// --------------------
+// WAAGE - Gleichung a·x + b = c·x + d mit Äquivalenzumformungen lösen
+//   equation: { a: 3, b: 2, c: 1, d: 8 }   (kleine natürliche Zahlen, Lösung natürliche Zahl)
+// --------------------
+registerInput("waage", ({ task, onCorrect, isSolved }) => {
+  const container = CTFUI.box();
+  const start = task.equation;
+  let state = { ...start };
+  let log = [];
+  let done = isSolved;
+
+  const side = (boxes, weights) => {
+    const parts = [];
+    if (boxes > 0) parts.push(boxes === 1 ? "x" : boxes + "x");
+    if (weights > 0 || boxes === 0) parts.push(String(weights));
+    return parts.join(" + ");
+  };
+  const text = (s) => `${side(s.a, s.b)} = ${side(s.c, s.d)}`;
+  const solutionOf = (s) => {
+    if (s.a === 1 && s.b === 0 && s.c === 0) return s.d;
+    if (s.c === 1 && s.d === 0 && s.a === 0) return s.b;
+    return null;
+  };
+
+  container.appendChild(CTFUI.hint(task.instruction || "⚖️ Die Waage bleibt im Gleichgewicht, wenn du auf beiden Seiten dasselbe tust. Wie schwer ist eine Kiste x?"));
+
+  const scale = document.createElement("div");
+  scale.style.display = "grid";
+  scale.style.gridTemplateColumns = "1fr auto 1fr";
+  scale.style.alignItems = "end";
+  scale.style.gap = "8px";
+  container.appendChild(scale);
+
+  const steps = document.createElement("div");
+  steps.style.fontFamily = "'Courier New', monospace";
+  steps.style.fontSize = "15px";
+  steps.style.background = "white";
+  steps.style.border = "1px solid #e0e0e0";
+  steps.style.borderRadius = "8px";
+  steps.style.padding = "8px 12px";
+  steps.style.lineHeight = "1.6";
+  container.appendChild(steps);
+
+  const controls = document.createElement("div");
+  controls.style.display = "flex";
+  controls.style.flexWrap = "wrap";
+  controls.style.gap = "8px";
+  controls.style.justifyContent = "center";
+  container.appendChild(controls);
+
+  const feedback = CTFUI.feedback();
+  container.appendChild(feedback.el);
+
+  const pan = (boxes, weights) => {
+    const wrap = document.createElement("div");
+    const items = document.createElement("div");
+    items.style.display = "flex";
+    items.style.flexWrap = "wrap-reverse";
+    items.style.justifyContent = "center";
+    items.style.alignItems = "flex-end";
+    items.style.gap = "4px";
+    items.style.minHeight = "52px";
+    items.style.padding = "6px";
+    for (let i = 0; i < boxes; i++) {
+      const box = document.createElement("div");
+      box.textContent = "x";
+      box.style.width = "38px";
+      box.style.height = "38px";
+      box.style.display = "flex";
+      box.style.alignItems = "center";
+      box.style.justifyContent = "center";
+      box.style.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+      box.style.color = "white";
+      box.style.fontWeight = "bold";
+      box.style.fontStyle = "italic";
+      box.style.borderRadius = "6px";
+      items.appendChild(box);
+    }
+    for (let i = 0; i < weights; i++) {
+      const weight = document.createElement("div");
+      weight.textContent = "1";
+      weight.style.width = "26px";
+      weight.style.height = "26px";
+      weight.style.display = "flex";
+      weight.style.alignItems = "center";
+      weight.style.justifyContent = "center";
+      weight.style.background = "#ffb300";
+      weight.style.color = "#4e342e";
+      weight.style.fontSize = "13px";
+      weight.style.fontWeight = "bold";
+      weight.style.borderRadius = "50%";
+      items.appendChild(weight);
+    }
+    const plate = document.createElement("div");
+    plate.style.height = "8px";
+    plate.style.background = "#607d8b";
+    plate.style.borderRadius = "0 0 30px 30px";
+    wrap.appendChild(items);
+    wrap.appendChild(plate);
+    return wrap;
+  };
+
+  const render = () => {
+    scale.innerHTML = "";
+    scale.appendChild(pan(state.a, state.b));
+    const pivot = document.createElement("div");
+    pivot.textContent = "⚖️";
+    pivot.style.fontSize = "30px";
+    scale.appendChild(pivot);
+    scale.appendChild(pan(state.c, state.d));
+
+    steps.innerHTML = "";
+    let current = { ...start };
+    const line = (content) => {
+      const div = document.createElement("div");
+      div.textContent = content;
+      steps.appendChild(div);
+    };
+    log.forEach((entry) => {
+      line(`${text(current)}   | ${entry.label}`);
+      current = entry.after;
+    });
+    line(text(current));
+
+    controls.querySelectorAll("button").forEach((b) => (b.disabled = done));
+  };
+
+  const apply = (label, change, problem) => {
+    if (done) return;
+    if (problem) {
+      feedback.show("⚠️ " + problem, "info");
+      return;
+    }
+    state = change;
+    log.push({ label, after: { ...state } });
+    feedback.show("", "ok");
+    const x = solutionOf(state);
+    if (x !== null) {
+      done = true;
+      feedback.show(`✅ Richtig! Eine Kiste wiegt ${x}, also x = ${x}. 🎉`, "ok");
+      render();
+      onCorrect(`x = ${x}`);
+      return;
+    }
+    render();
+  };
+
+  const minusOne = CTFUI.button("− 1 auf beiden Seiten", "#ff9800");
+  minusOne.onclick = () => apply("− 1", { ...state, b: state.b - 1, d: state.d - 1 },
+    state.b < 1 || state.d < 1 ? "Auf einer Seite liegt kein Gewicht mehr." : null);
+  const minusX = CTFUI.button("− x auf beiden Seiten", "#667eea");
+  minusX.onclick = () => apply("− x", { ...state, a: state.a - 1, c: state.c - 1 },
+    state.a < 1 || state.c < 1 ? "Auf einer Seite liegt keine Kiste mehr." : null);
+  controls.appendChild(minusOne);
+  controls.appendChild(minusX);
+  [2, 3, 4, 5].forEach((n) => {
+    const divide = CTFUI.button(`: ${n}`, "#009688");
+    divide.onclick = () => {
+      const ok = [state.a, state.b, state.c, state.d].every((v) => v % n === 0);
+      apply(`: ${n}`, { a: state.a / n, b: state.b / n, c: state.c / n, d: state.d / n },
+        ok ? null : `Durch ${n} lässt sich hier nicht auf beiden Seiten gleichmäßig teilen.`);
+    };
+    controls.appendChild(divide);
+  });
+  const reset = CTFUI.button("↺ Von vorn", "#9e9e9e");
+  reset.onclick = () => {
+    if (done) return;
+    state = { ...start };
+    log = [];
+    feedback.show("", "ok");
+    render();
+  };
+  controls.appendChild(reset);
+
+  if (isSolved) {
+    // gelösten Zustand zeigen: eine Kiste gegen ihr Gewicht
+    const x = (start.d - start.b) / (start.a - start.c);
+    state = { a: 1, b: 0, c: 0, d: x };
+    log = [{ label: "…", after: { ...state } }];
+    feedback.show(`✅ x = ${x}`, "ok");
+  }
+  render();
+  return container;
+});
+
+// --------------------
+// SCHRITTE - Lösungsschritte mit den Pfeilen in die richtige Reihenfolge bringen
+//   steps: ["\\(4(x-2)+3=2x+7\\)", ...] in der richtigen Reihenfolge; die erste Zeile bleibt fest
+// --------------------
+registerInput("schritte", ({ task, onCorrect, isSolved }) => {
+  const container = CTFUI.box();
+  const steps = task.steps;
+  const movable = steps.length - 1;
+  let order = isSolved ? steps.map((_, i) => i) : [0, ...CTFUI.shuffle(movable, task.id).map((i) => i + 1)];
+  let done = isSolved;
+
+  container.appendChild(CTFUI.hint(task.instruction || "🔀 Bringe die Zeilen mit den Pfeilen in die richtige Reihenfolge."));
+
+  const list = document.createElement("div");
+  list.style.display = "flex";
+  list.style.flexDirection = "column";
+  list.style.gap = "6px";
+  container.appendChild(list);
+
+  const feedback = CTFUI.feedback();
+  const checkButton = CTFUI.button("✓ Prüfen");
+  checkButton.style.alignSelf = "flex-end";
+
+  const arrow = (label, enabled, onClick) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = label;
+    btn.disabled = !enabled;
+    btn.style.width = "38px";
+    btn.style.height = "34px";
+    btn.style.fontSize = "16px";
+    btn.style.border = "none";
+    btn.style.borderRadius = "8px";
+    btn.style.background = enabled ? "#667eea" : "#d7d7d7";
+    btn.style.color = "white";
+    btn.style.cursor = enabled ? "pointer" : "default";
+    btn.onclick = onClick;
+    return btn;
+  };
+
+  const render = () => {
+    list.innerHTML = "";
+    order.forEach((stepIndex, pos) => {
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.gap = "6px";
+      row.style.padding = "6px 10px";
+      row.style.background = pos === 0 ? "#eceff1" : "white";
+      row.style.border = "2px solid " + (done ? "#4caf50" : "#d0d0d0");
+      row.style.borderRadius = "10px";
+
+      const content = document.createElement("div");
+      content.innerHTML = steps[stepIndex];
+      content.style.flex = "1";
+      content.style.fontSize = "16px";
+      row.appendChild(content);
+
+      if (pos > 0 && !done) {
+        const swap = (other) => () => {
+          [order[pos], order[other]] = [order[other], order[pos]];
+          feedback.show("", "ok");
+          render();
+        };
+        row.appendChild(arrow("▲", pos > 1, swap(pos - 1)));
+        row.appendChild(arrow("▼", pos < order.length - 1, swap(pos + 1)));
+      } else if (pos === 0) {
+        const pin = document.createElement("span");
+        pin.textContent = "📌";
+        row.appendChild(pin);
+      }
+      list.appendChild(row);
+    });
+    CTFUI.math(list);
+  };
+
+  checkButton.onclick = () => {
+    if (done) return;
+    const correct = order.filter((stepIndex, pos) => steps[stepIndex] === steps[pos]).length;
+    if (correct === steps.length) {
+      done = true;
+      CTFUI.solvedButton(checkButton);
+      feedback.show("✅ Richtig! 🎉", "ok");
+      render();
+      onCorrect("sortiert");
+    } else {
+      feedback.show(`❌ ${correct - 1} von ${movable} Zeilen stehen an der richtigen Stelle.`, "wrong");
+    }
+  };
+
+  if (isSolved) CTFUI.solvedButton(checkButton);
+  render();
+  container.appendChild(checkButton);
+  container.appendChild(feedback.el);
+  return container;
+});
+
+// --------------------
+// FEHLERSUCHE - erst die fehlerhafte Zeile antippen, dann die richtige Lösung eingeben
+//   lines: ["\\(5x-3=2x+9 \\quad |\\,-2x\\)", ...], errorLine: 2 (ab 0 gezählt), answer: 4
+// --------------------
+registerInput("fehlersuche", ({ task, onCorrect, initialValue, isSolved }) => {
+  const container = CTFUI.box();
+  let found = isSolved;
+  let done = isSolved;
+
+  container.appendChild(CTFUI.hint(task.instruction || "🕵️ In dieser Rechnung steckt ein Fehler. Tippe die erste falsche Zeile an."));
+
+  const list = document.createElement("div");
+  list.style.display = "flex";
+  list.style.flexDirection = "column";
+  list.style.gap = "6px";
+  container.appendChild(list);
+
+  const feedback = CTFUI.feedback();
+
+  const answerRow = document.createElement("div");
+  answerRow.style.display = "flex";
+  answerRow.style.flexWrap = "wrap";
+  answerRow.style.alignItems = "center";
+  answerRow.style.justifyContent = "flex-end";
+  answerRow.style.gap = "8px";
+  const label = document.createElement("span");
+  label.textContent = "Richtige Lösung: x =";
+  label.style.fontWeight = "bold";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.autocomplete = "off";
+  input.style.width = "110px";
+  input.style.padding = "8px";
+  input.style.fontSize = "16px";
+  input.style.textAlign = "right";
+  const checkButton = CTFUI.button("✓ Prüfen");
+  answerRow.appendChild(label);
+  answerRow.appendChild(input);
+  answerRow.appendChild(checkButton);
+
+  const render = () => {
+    list.innerHTML = "";
+    task.lines.forEach((html, index) => {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.style.display = "flex";
+      row.style.gap = "10px";
+      row.style.alignItems = "center";
+      row.style.padding = "8px 10px";
+      row.style.fontSize = "16px";
+      row.style.textAlign = "left";
+      row.style.color = "#222";
+      row.style.borderRadius = "10px";
+      row.style.cursor = found ? "default" : "pointer";
+      const isError = found && index === task.errorLine;
+      row.style.background = isError ? "#ffebee" : "white";
+      row.style.border = "2px solid " + (isError ? "#f44336" : "#d0d0d0");
+      const number = document.createElement("span");
+      number.textContent = `(${index + 1})`;
+      number.style.color = "#888";
+      const content = document.createElement("span");
+      content.innerHTML = html + (isError ? " &nbsp;❌" : "");
+      row.appendChild(number);
+      row.appendChild(content);
+      row.onclick = () => {
+        if (found) return;
+        if (index === task.errorLine) {
+          found = true;
+          feedback.show("🎯 Fehler gefunden! Rechne jetzt richtig und gib die Lösung ein.", "ok");
+          render();
+          input.focus();
+        } else {
+          feedback.show(`❌ In Zeile (${index + 1}) steckt nicht der erste Fehler.`, "wrong");
+        }
+      };
+      list.appendChild(row);
+    });
+    CTFUI.math(list);
+    answerRow.style.display = found ? "flex" : "none";
+  };
+
+  const validate = () => {
+    if (done) return;
+    const raw = input.value.trim().replace(/^x\s*=/i, "");
+    if (raw === "") {
+      feedback.show("⚠️ Bitte eine Antwort eingeben", "info");
+      return;
+    }
+    if (CTFTerm.parse(raw) && CTFTerm.variables(raw).length === 0 && CTFTerm.equivalent(raw, String(task.answer))) {
+      done = true;
+      input.disabled = true;
+      input.classList.add("correct");
+      CTFUI.solvedButton(checkButton);
+      feedback.show("✅ Richtig! 🎉", "ok");
+      onCorrect(raw);
+    } else {
+      input.classList.add("wrong");
+      feedback.show("❌ Falsch! Versuche es noch einmal.", "wrong");
+      setTimeout(() => input.classList.remove("wrong"), 2000);
+    }
+  };
+  checkButton.onclick = validate;
+  input.addEventListener("keypress", (e) => { if (e.key === "Enter") validate(); });
+
+  if (isSolved) {
+    input.value = initialValue || String(task.answer);
+    input.disabled = true;
+    CTFUI.solvedButton(checkButton);
+  }
+  render();
+  container.appendChild(feedback.el);
+  container.appendChild(answerRow);
+  return container;
+});
