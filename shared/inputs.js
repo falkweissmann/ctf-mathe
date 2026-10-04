@@ -5360,3 +5360,349 @@ registerInput("text", ({ task, onCorrect, initialValue, isSolved }) => {
   
   return container;
 });
+
+// --------------------
+// TERM-RECHNER - liest Terme in Schulschreibweise (z.B. 6x^2-3x+4, 6a(2b-3), 2,5x)
+// und vergleicht sie rechnerisch statt Zeichen für Zeichen.
+// Wird von den Typen "term" und "umformung" benutzt.
+// --------------------
+const CTFTerm = {
+  normalize(raw) {
+    return String(raw)
+      .toLowerCase()
+      .replace(/\s/g, "")
+      .replace(/[−–—]/g, "-")
+      .replace(/[·×⋅•]/g, "*")
+      .replace(/[:÷]/g, "/")
+      .replace(/²/g, "^2")
+      .replace(/³/g, "^3")
+      .replace(/,/g, ".");
+  },
+
+  // Gibt eine Funktion (Belegung -> Zahl) zurück oder null, wenn die Eingabe kein Term ist.
+  parse(raw) {
+    const s = this.normalize(raw);
+    const tokens = s.match(/\d+\.?\d*|\.\d+|[a-z]|[-+*/^()]/g) || [];
+    if (s === "" || tokens.join("") !== s) return null;
+
+    let pos = 0;
+    const peek = () => tokens[pos];
+    const startsPrimary = (t) => t !== undefined && /^[\d.a-z(]/.test(t);
+
+    const primary = () => {
+      const t = tokens[pos++];
+      if (t === undefined) throw new Error("Ende");
+      if (/^[\d.]/.test(t)) {
+        const value = parseFloat(t);
+        return () => value;
+      }
+      if (/^[a-z]$/.test(t)) return (env) => env[t];
+      if (t === "(") {
+        const inner = expr();
+        if (tokens[pos++] !== ")") throw new Error("Klammer");
+        return inner;
+      }
+      throw new Error("Zeichen");
+    };
+    const power = () => {
+      const base = primary();
+      if (peek() === "^") {
+        pos++;
+        const exponent = factor();
+        return (env) => Math.pow(base(env), exponent(env));
+      }
+      return base;
+    };
+    const factor = () => {
+      if (peek() === "-") { pos++; const f = factor(); return (env) => -f(env); }
+      if (peek() === "+") { pos++; return factor(); }
+      return power();
+    };
+    const term = () => {
+      let left = power();
+      for (;;) {
+        const t = peek();
+        if (t === "*" || t === "/") {
+          pos++;
+          const l = left, r = factor();
+          left = t === "*" ? (env) => l(env) * r(env) : (env) => l(env) / r(env);
+        } else if (startsPrimary(t)) {
+          const l = left, r = power();
+          left = (env) => l(env) * r(env);
+        } else {
+          return left;
+        }
+      }
+    };
+    const signedTerm = () => {
+      if (peek() === "-") { pos++; const t = signedTerm(); return (env) => -t(env); }
+      if (peek() === "+") { pos++; return signedTerm(); }
+      return term();
+    };
+    const expr = () => {
+      let left = signedTerm();
+      while (peek() === "+" || peek() === "-") {
+        const op = tokens[pos++];
+        const l = left, r = term();
+        left = op === "+" ? (env) => l(env) + r(env) : (env) => l(env) - r(env);
+      }
+      return left;
+    };
+
+    try {
+      const result = expr();
+      if (pos !== tokens.length) return null;
+      return result;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  variables(raw) {
+    return [...new Set(this.normalize(raw).match(/[a-z]/g) || [])];
+  },
+
+  // Zwei Terme sind gleichwertig, wenn sie für viele Belegungen denselben Wert liefern.
+  equivalent(a, b) {
+    const fa = this.parse(a), fb = this.parse(b);
+    if (!fa || !fb) return false;
+    const names = [...new Set([...this.variables(a), ...this.variables(b)])];
+    let checked = 0;
+    for (let i = 0; i < 40 && checked < 8; i++) {
+      const env = {};
+      names.forEach((n) => {
+        const v = 0.37 + Math.random() * 4.1;
+        env[n] = Math.random() < 0.5 ? v : -v;
+      });
+      const va = fa(env), vb = fb(env);
+      if (!isFinite(va) || !isFinite(vb)) continue;
+      if (Math.abs(va - vb) > 1e-7 * Math.max(1, Math.abs(va), Math.abs(vb))) return false;
+      checked++;
+    }
+    return checked > 0;
+  },
+
+  // Summanden auf oberster Ebene (nur für Terme ohne Klammern gedacht)
+  summands(raw) {
+    const s = this.normalize(raw);
+    const parts = [];
+    let current = "";
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
+      const prev = s[i - 1];
+      if ((c === "+" || c === "-") && i > 0 && !"*/^+-".includes(prev)) {
+        parts.push(current);
+        current = "";
+      } else {
+        current += c;
+      }
+    }
+    parts.push(current);
+    return parts.filter((p) => p !== "");
+  },
+
+  // Vollständig vereinfacht: keine Klammern, nicht mehr Summanden als die Musterlösung,
+  // in jedem Summanden höchstens eine Zahl und jede Variable nur einmal.
+  isSimplified(raw, expected) {
+    const s = this.normalize(raw);
+    if (s.includes("(")) return false;
+    const parts = this.summands(s);
+    if (parts.length > this.summands(expected).length) return false;
+    return parts.every((p) => {
+      const withoutExponents = p.replace(/\^\d+/g, "");
+      const numbers = withoutExponents.match(/\d+\.?\d*/g) || [];
+      const letters = withoutExponents.match(/[a-z]/g) || [];
+      const maxNumbers = p.includes("/") ? 2 : 1;
+      return numbers.length <= maxNumbers && new Set(letters).size === letters.length;
+    });
+  },
+
+  // Zerlegt "6a(2b-3)" in Faktor "6a" und Klammer "2b-3"
+  splitFactored(raw) {
+    const s = this.normalize(raw);
+    let m = s.match(/^([^()]+?)\*?\(([^()]+)\)$/);
+    if (m) return { factor: m[1], inner: m[2] };
+    m = s.match(/^\(([^()]+)\)\*?([^()]+)$/);
+    if (m) return { factor: m[2], inner: m[1] };
+    return null;
+  }
+};
+
+// Gemeinsames Aussehen für die beiden Eingabetypen
+function createCTFTermField({ task, onCorrect, initialValue, isSolved, placeholder, check }) {
+  const container = document.createElement("div");
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.gap = "8px";
+  container.style.marginTop = "10px";
+  container.style.padding = "10px";
+  container.style.background = "#f9f9f9";
+  container.style.borderRadius = "8px";
+  container.style.border = "1px solid #e0e0e0";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = task.placeholder || placeholder;
+  input.autocomplete = "off";
+  input.autocapitalize = "off";
+  input.spellcheck = false;
+  input.style.width = "100%";
+  input.style.padding = "8px";
+  input.style.fontSize = "16px";
+  input.style.borderRadius = "4px";
+  input.style.border = "1px solid #ccc";
+
+  const feedbackDiv = document.createElement("div");
+  feedbackDiv.style.fontSize = "12px";
+  feedbackDiv.style.padding = "6px";
+  feedbackDiv.style.borderRadius = "6px";
+  feedbackDiv.style.textAlign = "center";
+
+  const checkButton = document.createElement("button");
+  checkButton.textContent = "✓ Prüfen";
+  checkButton.style.padding = "6px 18px";
+  checkButton.style.fontSize = "13px";
+  checkButton.style.cursor = "pointer";
+  checkButton.style.background = "#667eea";
+  checkButton.style.color = "white";
+  checkButton.style.border = "none";
+  checkButton.style.borderRadius = "20px";
+  checkButton.style.alignSelf = "flex-end";
+
+  if (initialValue) input.value = initialValue;
+  if (isSolved) {
+    input.disabled = true;
+    input.classList.add("solved-input");
+    checkButton.disabled = true;
+    checkButton.style.background = "#4caf50";
+    checkButton.textContent = "✓ Gelöst";
+  }
+
+  let clearTimer = null;
+  const show = (text, background, color, keep) => {
+    clearTimeout(clearTimer);
+    feedbackDiv.textContent = text;
+    feedbackDiv.style.background = background;
+    feedbackDiv.style.color = color;
+    if (!keep) {
+      clearTimer = setTimeout(() => {
+        if (!input.disabled) {
+          input.classList.remove("wrong");
+          feedbackDiv.textContent = "";
+          feedbackDiv.style.background = "";
+        }
+      }, 4000);
+    }
+  };
+
+  const validate = () => {
+    if (isSolved || input.disabled) return;
+    const rawValue = input.value.trim();
+    if (rawValue === "") {
+      show("⚠️ Bitte eine Antwort eingeben", "#fff3e0", "#ff9800");
+      return;
+    }
+
+    // check liefert true (richtig), false (falsch) oder einen Hinweistext
+    const result = check(rawValue);
+    if (result === true) {
+      input.classList.add("correct");
+      input.classList.remove("wrong");
+      input.disabled = true;
+      checkButton.disabled = true;
+      checkButton.style.background = "#4caf50";
+      checkButton.textContent = "✓ Gelöst";
+      show("✅ Richtig! 🎉", "#e8f5e9", "#2e7d32", true);
+      onCorrect(rawValue);
+    } else if (typeof result === "string") {
+      input.classList.remove("correct");
+      show(result, "#fff3e0", "#e65100");
+    } else {
+      input.classList.add("wrong");
+      input.classList.remove("correct");
+      show("❌ Falsch! Versuche es noch einmal.", "#ffebee", "#c62828");
+    }
+  };
+
+  checkButton.onclick = validate;
+  input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") validate();
+  });
+
+  container.appendChild(input);
+  container.appendChild(checkButton);
+  container.appendChild(feedbackDiv);
+  return container;
+}
+
+// --------------------
+// TERM - Term eingeben; die Reihenfolge der Summanden ist egal
+//   answer: "6x+2y"
+//   form:   "simplified" (Standard) - muss vollständig vereinfacht sein
+//           "factored"  - muss ausgeklammert sein, factor: "6a" ist der größtmögliche Faktor
+//           "value"     - Zahl als Bruch oder Dezimalzahl, z.B. 2/5 oder 0,4
+// --------------------
+registerInput("term", ({ task, onCorrect, initialValue, isSolved }) => {
+  const form = task.form || "simplified";
+  const placeholders = {
+    simplified: "z.B. 6x^2-3x+4",
+    factored: "z.B. 3(2x+5)",
+    value: "z.B. 3/4 oder 0,75"
+  };
+
+  const check = (rawValue) => {
+    let value = rawValue;
+    if (form === "value") value = CTFTerm.normalize(value).replace(/^[a-z]=/, "");
+
+    if (!CTFTerm.parse(value)) {
+      return "⚠️ Diese Eingabe kann ich nicht lesen. Schreibe " + placeholders[form] + ".";
+    }
+    if (form === "value" && CTFTerm.variables(value).length > 0) return false;
+    if (!CTFTerm.equivalent(value, task.answer)) return false;
+
+    if (form === "simplified" && !CTFTerm.isSimplified(value, task.answer)) {
+      return "🔎 Der Term stimmt, ist aber noch nicht vollständig vereinfacht.";
+    }
+    if (form === "factored") {
+      const parts = CTFTerm.splitFactored(value);
+      if (!parts) return "🔎 Der Term stimmt, aber es wurde noch nichts ausgeklammert.";
+      const expectedFactor = task.factor || (CTFTerm.splitFactored(task.answer) || {}).factor;
+      const sameFactor = CTFTerm.equivalent(parts.factor, expectedFactor) ||
+                         CTFTerm.equivalent(parts.factor, "-(" + expectedFactor + ")");
+      if (!sameFactor) return "🔎 Richtig umgeformt, aber das ist noch nicht der größtmögliche Faktor.";
+    }
+    return true;
+  };
+
+  return createCTFTermField({ task, onCorrect, initialValue, isSolved, placeholder: placeholders[form], check });
+});
+
+// --------------------
+// UMFORMUNG - Äquivalenzumformung angeben, z.B. -7, +2x, *5 oder :4
+//   answer: "-7" | "+2x" | "*5" | ":4"
+// --------------------
+registerInput("umformung", ({ task, onCorrect, initialValue, isSolved }) => {
+  const split = (raw) => {
+    const s = CTFTerm.normalize(
+      String(raw)
+        .toLowerCase()
+        .replace(/geteilt\s*durch|durch/g, "/")
+        .replace(/mal/g, "*")
+        .replace(/plus/g, "+")
+        .replace(/minus/g, "-")
+    ).replace(/^\|+/, "");
+    const m = s.match(/^([-+*/])(.+)$/);
+    return m ? { op: m[1], operand: m[2] } : null;
+  };
+
+  const check = (rawValue) => {
+    const user = split(rawValue);
+    if (!user || !CTFTerm.parse(user.operand)) {
+      return "⚠️ Schreibe die Umformung so: +4 oder -2x oder *3 oder :5";
+    }
+    const expected = split(task.answer);
+    return user.op === expected.op && CTFTerm.equivalent(user.operand, expected.operand);
+  };
+
+  return createCTFTermField({ task, onCorrect, initialValue, isSolved, placeholder: "z.B. +4 oder :3", check });
+});
